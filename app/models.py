@@ -1,3 +1,5 @@
+# app/models.py
+
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
 from sqlalchemy.orm import relationship
 
@@ -9,6 +11,8 @@ class Cave(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
+
+    region = Column(String, nullable=False, default="romandie")
 
     length_m = Column(Float, nullable=False)
     width_m = Column(Float, nullable=False)

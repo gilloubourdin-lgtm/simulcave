@@ -35,14 +35,36 @@
   </div>
 </div>
 
+<h3>Résultats mensuels</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mois</th>
+      <th>Température extérieure moyenne [°C]</th>
+      <th>Besoins chaud [kWh]</th>
+      <th>Besoins froid [kWh]</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for month in result.monthly_results %}
+    <tr>
+      <td>{{ month.month }}</td>
+      <td>{{ month.outdoor_temp_c }}</td>
+      <td>{{ month.heating_kwh }}</td>
+      <td>{{ month.cooling_kwh }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 <h3>Hypothèses actuelles</h3>
 
 <ul>
-  <li>Température extérieure hiver : 0 °C</li>
-  <li>Température extérieure été : 30 °C</li>
-  <li>Période de chauffage : 120 jours</li>
-  <li>Période de refroidissement : 120 jours</li>
-  <li>Calcul simplifié : Q = U × A × ΔT × temps</li>
+  <li>Calcul mensuel basé sur la température moyenne régionale.</li>
+  <li>Formule : Q = U × A × ΔT × heures.</li>
+  <li>Les besoins process sont répartis linéairement sur 12 mois.</li>
+  <li>L’inertie thermique n’est pas encore prise en compte.</li>
 </ul>
 
 <a href="/caves/{{ cave.id }}">Retour à la cave</a>
