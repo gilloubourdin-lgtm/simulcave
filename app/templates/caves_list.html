@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Caves simulées</h2>
+
+<a class="button" href="/caves/new">Créer une cave</a>
+
+{% if caves %}
+<table>
+  <thead>
+    <tr>
+      <th>Nom</th>
+      <th>Dimensions</th>
+      <th>Zones</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cave in caves %}
+    <tr>
+      <td>{{ cave.name }}</td>
+      <td>
+        {{ cave.length_m }} × {{ cave.width_m }} × {{ cave.height_m }} m
+      </td>
+      <td>{{ cave.zones|length }}</td>
+      <td>
+        <a href="/caves/{{ cave.id }}">Voir</a>
+        |
+        <a href="/caves/{{ cave.id }}/simulate">Simuler</a>
+        |
+        <form method="post" action="/caves/{{ cave.id }}/delete" style="display:inline;">
+          <button type="submit">Supprimer</button>
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Aucune cave créée.</p>
+{% endif %}
+{% endblock %}

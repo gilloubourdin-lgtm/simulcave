@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>{{ cave.name }}</h2>
+
+<p>
+  Dimensions :
+  {{ cave.length_m }} × {{ cave.width_m }} × {{ cave.height_m }} m
+</p>
+
+<p>
+  Volume total :
+  {{ cave.length_m * cave.width_m * cave.height_m }} m³
+</p>
+
+<p>
+  Facteur d’enterrement :
+  {{ cave.buried_factor }}
+</p>
+
+<a class="button" href="/caves/{{ cave.id }}/simulate">
+  Lancer la simulation
+</a>
+
+<h3>Parois</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Nom</th>
+      <th>Orientation</th>
+      <th>Matériau</th>
+      <th>Surface [m²]</th>
+      <th>U [W/m²K]</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for wall in cave.walls %}
+    <tr>
+      <td>{{ wall.name }}</td>
+      <td>{{ wall.orientation }}</td>
+      <td>{{ wall.material }}</td>
+      <td>{{ wall.area_m2 }}</td>
+      <td>{{ wall.u_value }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Zones thermiques</h3>
+
+{% for zone in cave.zones %}
+<form method="post" action="/zones/{{ zone.id }}/update" class="zone-card">
+  <h4>{{ zone.name }}</h4>
+
+  <label>Nom</label>
+  <input type="text" name="name" value="{{ zone.name }}" required>
+
+  <label>Volume [m³]</label>
+  <input type="number" step="0.1" name="volume_m3" value="{{ zone.volume_m3 }}" required>
+
+  <label>Température cible hiver [°C]</label>
+  <input type="number" step="0.1" name="target_temp_winter_c" value="{{ zone.target_temp_winter_c }}" required>
+
+  <label>Température cible été [°C]</label>
+  <input type="number" step="0.1" name="target_temp_summer_c" value="{{ zone.target_temp_summer_c }}" required>
+
+  <label>Humidité cible [%]</label>
+  <input type="number" step="0.1" name="target_humidity_percent" value="{{ zone.target_humidity_percent or 75 }}">
+
+  <label>Besoins chaud process [kWh/an]</label>
+  <input type="number" step="0.1" name="process_heating_kwh" value="{{ zone.process_heating_kwh or 0 }}">
+
+  <label>Besoins froid process [kWh/an]</label>
+  <input type="number" step="0.1" name="process_cooling_kwh" value="{{ zone.process_cooling_kwh or 0 }}">
+
+  <button type="submit">Mettre à jour la zone</button>
+</form>
+{% endfor %}
+{% endblock %}

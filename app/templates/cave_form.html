@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Créer une cave</h2>
+
+<form method="post" action="/caves">
+  <section>
+    <h3>Informations générales</h3>
+
+    <label>Nom</label>
+    <input type="text" name="name" required>
+
+    <label>Longueur [m]</label>
+    <input type="number" step="0.1" name="length_m" required>
+
+    <label>Largeur [m]</label>
+    <input type="number" step="0.1" name="width_m" required>
+
+    <label>Hauteur [m]</label>
+    <input type="number" step="0.1" name="height_m" required>
+
+    <label>Niveau d’enterrement</label>
+    <select name="buried_factor">
+      <option value="1.0">Non enterrée</option>
+      <option value="0.7">Semi-enterrée</option>
+      <option value="0.4">Enterrée</option>
+    </select>
+
+    <label>Nombre de zones</label>
+    <input type="number" name="zone_count" min="1" max="20" value="1" required>
+  </section>
+
+  <section>
+    <h3>Parois verticales</h3>
+
+    <h4>Mur Nord</h4>
+    <label>Matériau</label>
+    <select name="wall_n_material">
+      <option>Pierre</option>
+      <option>Brique</option>
+      <option>Béton</option>
+      <option>Bois</option>
+      <option>Métal-bois</option>
+      <option>Panneau isolé</option>
+    </select>
+    <label>Valeur U [W/m²K]</label>
+    <input type="number" step="0.01" name="wall_n_u" value="1.4" required>
+
+    <h4>Mur Sud</h4>
+    <label>Matériau</label>
+    <select name="wall_s_material">
+      <option>Pierre</option>
+      <option>Brique</option>
+      <option>Béton</option>
+      <option>Bois</option>
+      <option>Métal-bois</option>
+      <option>Panneau isolé</option>
+    </select>
+    <label>Valeur U [W/m²K]</label>
+    <input type="number" step="0.01" name="wall_s_u" value="1.4" required>
+
+    <h4>Mur Est</h4>
+    <label>Matériau</label>
+    <select name="wall_e_material">
+      <option>Pierre</option>
+      <option>Brique</option>
+      <option>Béton</option>
+      <option>Bois</option>
+      <option>Métal-bois</option>
+      <option>Panneau isolé</option>
+    </select>
+    <label>Valeur U [W/m²K]</label>
+    <input type="number" step="0.01" name="wall_e_u" value="1.4" required>
+
+    <h4>Mur Ouest</h4>
+    <label>Matériau</label>
+    <select name="wall_w_material">
+      <option>Pierre</option>
+      <option>Brique</option>
+      <option>Béton</option>
+      <option>Bois</option>
+      <option>Métal-bois</option>
+      <option>Panneau isolé</option>
+    </select>
+    <label>Valeur U [W/m²K]</label>
+    <input type="number" step="0.01" name="wall_w_u" value="1.4" required>
+  </section>
+
+  <section>
+    <h3>Toiture et sol</h3>
+
+    <h4>Toiture</h4>
+    <label>Matériau</label>
+    <select name="roof_material">
+      <option>Béton</option>
+      <option>Bois</option>
+      <option>Panneau isolé</option>
+      <option>Métal-bois</option>
+    </select>
+    <label>Valeur U [W/m²K]</label>
+    <input type="number" step="0.01" name="roof_u" value="0.8" required>
+
+    <h4>Sol</h4>
+    <label>Matériau</label>
+    <select name="floor_material">
+      <option>Béton</option>
+      <option>Pierre</option>
+      <option>Terre battue</option>
+      <option>Dalle isolée</option>
+    </select>
+    <label>Valeur U [W/m²K]</label>
+    <input type="number" step="0.01" name="floor_u" value="0.6" required>
+  </section>
+
+  <button type="submit">Créer la cave</button>
+</form>
+{% endblock %}
