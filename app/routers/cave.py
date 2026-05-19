@@ -8,10 +8,11 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import Cave, Wall, Zone
 from app.services.simulation import simulate_cave
-
 from app.services.materials import get_material_properties
-
-from app.services.renovation import generate_renovation_scenarios
+from app.services.renovation import (
+    generate_renovation_scenarios,
+    calculate_scenario,
+)
 
 router = APIRouter()
 
@@ -48,6 +49,97 @@ def caves_list(request: Request, db: Session = Depends(get_db)):
         request,
         "caves_list.html",
         {"caves": caves},
+    )
+
+@router.get("/caves/{cave_id}/renovation/custom")
+def renovation_custom_form(
+    cave_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    cave = db.query(Cave).filter(Cave.id == cave_id).first()
+
+    if not cave:
+        raise HTTPException(status_code=404, detail="Cave introuvable.")
+
+    return render_template(
+        request,
+        "renovation_custom_form.html",
+        {"cave": cave},
+    )
+
+
+@router.post("/caves/{cave_id}/renovation/custom")
+def renovation_custom_result(
+    cave_id: int,
+    request: Request,
+    scenario_name: str = Form(...),
+    investment_chf: float = Form(...),
+    roof_reduction_percent: float = Form(...),
+    walls_reduction_percent: float = Form(...),
+    floor_reduction_percent: float = Form(...),
+    db: Session = Depends(get_db),
+):
+    cave = db.query(Cave).filter(Cave.id == cave_id).first()
+
+    if not cave:
+        raise HTTPException(status_code=404, detail="Cave introuvable.")
+
+    def wall_filter(wall):
+        if wall.name == "Toiture" and roof_reduction_percent > 0:
+            return True
+
+        if wall.orientation in ["N", "S", "E", "O"] and walls_reduction_percent > 0:
+            return True
+
+        if wall.name == "Sol" and floor_reduction_percent > 0:
+            return True
+
+        return False
+
+    # Réduction moyenne pondérée simple.
+    # Exemple : 30 % de réduction U => facteur 0.70.
+    reductions = []
+
+    if roof_reduction_percent > 0:
+        reductions.append(roof_reduction_percent)
+
+    if walls_reduction_percent > 0:
+        reductions.append(walls_reduction_percent)
+
+    if floor_reduction_percent > 0:
+        reductions.append(floor_reduction_percent)
+
+    if reductions:
+        average_reduction_percent = sum(reductions) / len(reductions)
+    else:
+        average_reduction_percent = 0
+
+    reduction_factor = 1 - (average_reduction_percent / 100)
+
+    scenario = calculate_scenario(
+        cave=cave,
+        name=scenario_name,
+        description=(
+            f"Toiture: -{roof_reduction_percent} %, "
+            f"murs: -{walls_reduction_percent} %, "
+            f"sol: -{floor_reduction_percent} % sur les valeurs U."
+        ),
+        investment_chf=investment_chf,
+        wall_filter=wall_filter,
+        reduction_factor=reduction_factor,
+    )
+
+    return render_template(
+        request,
+        "renovation_custom_result.html",
+        {
+            "cave": cave,
+            "scenario": scenario,
+            "roof_reduction_percent": roof_reduction_percent,
+            "walls_reduction_percent": walls_reduction_percent,
+            "floor_reduction_percent": floor_reduction_percent,
+        },
     )
 
 

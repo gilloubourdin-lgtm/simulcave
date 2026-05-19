@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Scénario de rénovation personnalisé — {{ cave.name }}</h2>
+
+<form method="post" action="/caves/{{ cave.id }}/renovation/custom">
+  <section>
+    <h3>Paramètres du scénario</h3>
+
+    <label>Nom du scénario</label>
+    <input type="text" name="scenario_name" value="Scénario personnalisé" required>
+
+    <label>Investissement estimé [CHF]</label>
+    <input type="number" step="100" name="investment_chf" value="30000" required>
+
+    <label>Réduction U toiture [%]</label>
+    <input type="number" step="1" min="0" max="90" name="roof_reduction_percent" value="30" required>
+
+    <label>Réduction U murs [%]</label>
+    <input type="number" step="1" min="0" max="90" name="walls_reduction_percent" value="25" required>
+
+    <label>Réduction U sol [%]</label>
+    <input type="number" step="1" min="0" max="90" name="floor_reduction_percent" value="10" required>
+  </section>
+
+  <button type="submit">Calculer le scénario</button>
+</form>
+
+<p>
+  <a href="/caves/{{ cave.id }}/renovation">Retour aux scénarios automatiques</a>
+</p>
+{% endblock %}

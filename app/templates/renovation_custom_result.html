@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Résultat scénario personnalisé — {{ cave.name }}</h2>
+
+<div class="kpi-grid">
+  <div class="kpi">
+    <h3>Économie énergie</h3>
+    <p>{{ scenario.energy_saved_kwh }} kWh/an</p>
+  </div>
+
+  <div class="kpi">
+    <h3>Économie financière</h3>
+    <p>{{ scenario.money_saved_chf }} CHF/an</p>
+  </div>
+
+  <div class="kpi">
+    <h3>CO₂ évité</h3>
+    <p>{{ scenario.co2_saved_kg }} kgCO₂/an</p>
+  </div>
+
+  <div class="kpi important">
+    <h3>Retour sur investissement</h3>
+    <p>
+      {% if scenario.payback_years %}
+        {{ scenario.payback_years }} ans
+      {% else %}
+        Non rentable
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<h3>Détails</h3>
+
+<table>
+  <tbody>
+    <tr>
+      <th>Nom</th>
+      <td>{{ scenario.name }}</td>
+    </tr>
+    <tr>
+      <th>Description</th>
+      <td>{{ scenario.description }}</td>
+    </tr>
+    <tr>
+      <th>Investissement</th>
+      <td>{{ scenario.investment_chf }} CHF</td>
+    </tr>
+    <tr>
+      <th>Réduction U toiture</th>
+      <td>{{ roof_reduction_percent }} %</td>
+    </tr>
+    <tr>
+      <th>Réduction U murs</th>
+      <td>{{ walls_reduction_percent }} %</td>
+    </tr>
+    <tr>
+      <th>Réduction U sol</th>
+      <td>{{ floor_reduction_percent }} %</td>
+    </tr>
+    <tr>
+      <th>Chaud avant → après</th>
+      <td>{{ scenario.heating_kwh_before }} → {{ scenario.heating_kwh_after }} kWh/an</td>
+    </tr>
+    <tr>
+      <th>Froid avant → après</th>
+      <td>{{ scenario.cooling_kwh_before }} → {{ scenario.cooling_kwh_after }} kWh/an</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>
+  <a class="button" href="/caves/{{ cave.id }}/renovation/custom">Tester un autre scénario</a>
+  <a class="button" href="/caves/{{ cave.id }}">Retour à la cave</a>
+</p>
+{% endblock %}
