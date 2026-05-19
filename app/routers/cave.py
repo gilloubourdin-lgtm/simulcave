@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Cave, Wall, Zone, User
+from app.models import Cave, Wall, Zone, User, RenovationScenarioDB
 from app.routers.auth import require_user
 from app.services.simulation import simulate_cave
 from app.services.materials import get_material_properties
@@ -361,7 +361,9 @@ def renovation(
     current_user: User = Depends(require_user),
 ):
     cave = get_user_cave(db, cave_id, current_user)
+
     scenarios = generate_renovation_scenarios(cave)
+    saved_scenarios = cave.renovation_scenarios
 
     return render_template(
         request,
@@ -369,6 +371,7 @@ def renovation(
         {
             "cave": cave,
             "scenarios": scenarios,
+            "saved_scenarios": saved_scenarios,
         },
     )
 
@@ -541,6 +544,36 @@ def update_wall(
 
     return RedirectResponse(
         url=f"/caves/{cave_id}",
+        status_code=303,
+    )
+
+@router.post("/caves/{cave_id}/renovation/custom/save")
+def save_custom_renovation_scenario(
+    cave_id: int,
+    scenario_name: str = Form(...),
+    investment_chf: float = Form(...),
+    roof_reduction_percent: float = Form(...),
+    walls_reduction_percent: float = Form(...),
+    floor_reduction_percent: float = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+
+    scenario = RenovationScenarioDB(
+        cave_id=cave.id,
+        name=scenario_name,
+        investment_chf=investment_chf,
+        roof_reduction_percent=roof_reduction_percent,
+        walls_reduction_percent=walls_reduction_percent,
+        floor_reduction_percent=floor_reduction_percent,
+    )
+
+    db.add(scenario)
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/caves/{cave.id}/renovation",
         status_code=303,
     )
 

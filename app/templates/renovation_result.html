@@ -149,6 +149,35 @@
 </div>
 {% endfor %}
 
+<h3>Scénarios personnalisés enregistrés</h3>
+
+{% if saved_scenarios %}
+<table>
+  <thead>
+    <tr>
+      <th>Nom</th>
+      <th>Investissement [CHF]</th>
+      <th>Réduction toiture [%]</th>
+      <th>Réduction murs [%]</th>
+      <th>Réduction sol [%]</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for scenario in saved_scenarios %}
+    <tr>
+      <td>{{ scenario.name }}</td>
+      <td>{{ scenario.investment_chf }}</td>
+      <td>{{ scenario.roof_reduction_percent }}</td>
+      <td>{{ scenario.walls_reduction_percent }}</td>
+      <td>{{ scenario.floor_reduction_percent }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Aucun scénario personnalisé enregistré.</p>
+{% endif %}
+
 <p>
   <a href="/caves/{{ cave.id }}">Retour à la cave</a>
 </p>

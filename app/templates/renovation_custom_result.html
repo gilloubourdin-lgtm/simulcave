@@ -31,6 +31,18 @@
   </div>
 </div>
 
+<form method="post" action="/caves/{{ cave.id }}/renovation/custom/save">
+  <input type="hidden" name="scenario_name" value="{{ scenario.name }}">
+  <input type="hidden" name="investment_chf" value="{{ scenario.investment_chf }}">
+  <input type="hidden" name="roof_reduction_percent" value="{{ roof_reduction_percent }}">
+  <input type="hidden" name="walls_reduction_percent" value="{{ walls_reduction_percent }}">
+  <input type="hidden" name="floor_reduction_percent" value="{{ floor_reduction_percent }}">
+
+  <button type="submit">
+    Enregistrer ce scénario
+  </button>
+</form>
+
 <h3>Détails</h3>
 
 <table>
