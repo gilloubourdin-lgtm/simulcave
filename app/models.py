@@ -13,12 +13,15 @@ class User(Base):
     hashed_password = Column(String, nullable=False)
     is_active = Column(Boolean, default=True)
 
+    caves = relationship("Cave", back_populates="user")
+
 class Cave(Base):
     __tablename__ = "caves"
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     name = Column(String, nullable=False)
+    user = relationship("User", back_populates="caves")
 
     region = Column(String, default="Vaud")
     altitude_m = Column(Float, default=500)
