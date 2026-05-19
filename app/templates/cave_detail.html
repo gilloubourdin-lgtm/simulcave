@@ -3,51 +3,21 @@
 {% block content %}
 <h2>{{ cave.name }}</h2>
 
-<p>
-  Région météo :
-  {{ cave.region }}
-</p>
-
-<p>
-  Dimensions :
-  {{ cave.length_m }} × {{ cave.width_m }} × {{ cave.height_m }} m
-</p>
-
-<p>
-  Volume total :
-  {{ cave.length_m * cave.width_m * cave.height_m }} m³
-</p>
-
-<p>
-  Facteur d’enterrement :
-  {{ cave.buried_factor }}
-</p>
+<p>Région météo : {{ cave.region }}</p>
+<p>Dimensions : {{ cave.length_m }} × {{ cave.width_m }} × {{ cave.height_m }} m</p>
+<p>Volume total : {{ cave.length_m * cave.width_m * cave.height_m }} m³</p>
+<p>Facteur d’enterrement : {{ cave.buried_factor }}</p>
 
 <h3>Énergie, coûts et CO₂</h3>
-
 <p>Source d’énergie : {{ cave.energy_source }}</p>
 <p>Prix énergie : {{ cave.energy_price_chf_per_kwh }} CHF/kWh</p>
 <p>Facteur CO₂ : {{ cave.co2_factor_kg_per_kwh }} kgCO₂/kWh</p>
 
-<a class="button" href="/caves/{{ cave.id }}/simulate">
-  Lancer la simulation
-</a>
-
-<a class="button" href="/caves/{{ cave.id }}/renovation">
-  Scénarios rénovation
-</a>
-
-<a class="button" href="/caves/{{ cave.id }}/renovation/custom">
-  Scénario personnalisé
-</a>
-
-<a class="button" href="/caves/{{ cave.id }}/report/pdf">
-  Télécharger le rapport PDF
-</a>
-
-<a class="button" href="/caves/{{ cave.id }}/plan">
-  Vue en plan
-</a>
+<a class="button" href="/caves/{{ cave.id }}/simulate">Lancer la simulation</a>
+<a class="button" href="/caves/{{ cave.id }}/renovation">Scénarios rénovation</a>
+<a class="button" href="/caves/{{ cave.id }}/renovation/custom">Scénario personnalisé</a>
+<a class="button" href="/caves/{{ cave.id }}/report/pdf">Télécharger le rapport PDF</a>
+<a class="button" href="/caves/{{ cave.id }}/plan">Vue en plan</a>
 
 <h3>Parois</h3>
 
@@ -81,94 +51,48 @@
 <h3>Zones thermiques</h3>
 
 {% for zone in cave.zones %}
-
 <div class="zone-card">
+  <h3>{{ zone.name }}</h3>
 
-<h3>{{ zone.name }}</h3>
+  <form method="post" action="/zones/{{ zone.id }}/update">
+    <label>Nom</label>
+    <input type="text" name="name" value="{{ zone.name }}" required>
 
-<form method="post" action="/zones/{{ zone.id }}/update">
+    <label>Volume [m³]</label>
+    <input type="number" step="0.1" name="volume_m3" value="{{ zone.volume_m3 }}" required>
 
-  <label>X [m]</label>
-  <input
-    type="number"
-    step="0.1"
-    name="x_m"
-    value="{{ zone.x_m }}"
-  >
+    <label>X [m]</label>
+    <input type="number" step="0.1" name="x_m" value="{{ zone.x_m }}" required>
 
-  <label>Y [m]</label>
-  <input
-    type="number"
-    step="0.1"
-    name="y_m"
-    value="{{ zone.y_m }}"
-  >
+    <label>Y [m]</label>
+    <input type="number" step="0.1" name="y_m" value="{{ zone.y_m }}" required>
 
-  <label>Largeur [m]</label>
-  <input
-    type="number"
-    step="0.1"
-    name="width_m"
-    value="{{ zone.width_m }}"
-  >
+    <label>Largeur [m]</label>
+    <input type="number" step="0.1" name="width_m" value="{{ zone.width_m }}" required>
 
-  <label>Longueur [m]</label>
-  <input
-    type="number"
-    step="0.1"
-    name="length_m"
-    value="{{ zone.length_m }}"
-  >
+    <label>Longueur [m]</label>
+    <input type="number" step="0.1" name="length_m" value="{{ zone.length_m }}" required>
 
-  <label>Température cible hiver [°C]</label>
-  <input
-    type="number"
-    step="0.1"
-    name="target_temp_winter_c"
-    value="{{ zone.target_temp_winter_c }}"
-  >
+    <label>Température cible hiver [°C]</label>
+    <input type="number" step="0.1" name="target_temp_winter_c" value="{{ zone.target_temp_winter_c }}" required>
 
-  <label>Température cible été [°C]</label>
-  <input
-    type="number"
-    step="0.1"
-    name="target_temp_summer_c"
-    value="{{ zone.target_temp_summer_c }}"
-  >
+    <label>Température cible été [°C]</label>
+    <input type="number" step="0.1" name="target_temp_summer_c" value="{{ zone.target_temp_summer_c }}" required>
 
-  <label>Humidité cible [%]</label>
-  <input
-    type="number"
-    step="0.1"
-    name="target_humidity_percent"
-    value="{{ zone.target_humidity_percent }}"
-  >
+    <label>Humidité cible [%]</label>
+    <input type="number" step="0.1" name="target_humidity_percent" value="{{ zone.target_humidity_percent }}" required>
 
-  <label>Besoins chaud process [kWh/an]</label>
-  <input
-    type="number"
-    step="0.1"
-    name="process_heating_kwh"
-    value="{{ zone.process_heating_kwh }}"
-  >
+    <label>Besoins chaud process [kWh/an]</label>
+    <input type="number" step="0.1" name="process_heating_kwh" value="{{ zone.process_heating_kwh }}">
 
-  <label>Besoins froid process [kWh/an]</label>
-  <input
-    type="number"
-    step="0.1"
-    name="process_cooling_kwh"
-    value="{{ zone.process_cooling_kwh }}"
-  >
+    <label>Besoins froid process [kWh/an]</label>
+    <input type="number" step="0.1" name="process_cooling_kwh" value="{{ zone.process_cooling_kwh }}">
 
-  <button type="submit">
-    Mettre à jour la zone
-  </button>
-
-</form>
-
+    <button type="submit">Mettre à jour la zone</button>
+  </form>
 </div>
 
 <hr>
-
 {% endfor %}
+
 {% endblock %}

@@ -167,4 +167,40 @@
 
   <button type="submit">Créer la cave</button>
 </form>
+
+<script>
+const materialUValues = {
+  "Pierre": 1.8,
+  "Brique": 1.4,
+  "Béton": 1.7,
+  "Bois": 0.8,
+  "Métal-bois": 1.2,
+  "Panneau isolé": 0.25,
+  "Terre battue": 1.5,
+  "Dalle isolée": 0.35
+};
+
+function connectMaterialToU(materialName, uName) {
+  const materialInput = document.querySelector(`[name="${materialName}"]`);
+  const uInput = document.querySelector(`[name="${uName}"]`);
+
+  if (!materialInput || !uInput) return;
+
+  materialInput.addEventListener("change", function () {
+    const selected = materialInput.value;
+
+    if (materialUValues[selected] !== undefined) {
+      uInput.value = materialUValues[selected];
+    }
+  });
+}
+
+connectMaterialToU("wall_n_material", "wall_n_u");
+connectMaterialToU("wall_s_material", "wall_s_u");
+connectMaterialToU("wall_e_material", "wall_e_u");
+connectMaterialToU("wall_w_material", "wall_w_u");
+connectMaterialToU("roof_material", "roof_u");
+connectMaterialToU("floor_material", "floor_u");
+</script>
+
 {% endblock %}

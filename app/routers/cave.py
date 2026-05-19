@@ -219,11 +219,15 @@ def update_zone(
     zone_id: int,
     name: str = Form(...),
     volume_m3: float = Form(...),
+    x_m: float = Form(0),
+    y_m: float = Form(0),
+    width_m: float = Form(1),
+    length_m: float = Form(1),
     target_temp_winter_c: float = Form(...),
     target_temp_summer_c: float = Form(...),
     target_humidity_percent: float = Form(...),
-    process_cooling_kwh: float = Form(...),
-    process_heating_kwh: float = Form(...),
+    process_cooling_kwh: float = Form(0),
+    process_heating_kwh: float = Form(0),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
@@ -237,15 +241,15 @@ def update_zone(
 
     zone.name = name
     zone.volume_m3 = volume_m3
-    zone.target_temp_winter_c = target_temp_winter_c
-    zone.target_temp_summer_c = target_temp_summer_c
-    zone.target_humidity_percent = target_temp_winter_c if False else target_humidity_percent
-    zone.process_cooling_kwh = process_cooling_kwh
-    zone.process_heating_kwh = process_heating_kwh
     zone.x_m = x_m
     zone.y_m = y_m
     zone.width_m = width_m
     zone.length_m = length_m
+    zone.target_temp_winter_c = target_temp_winter_c
+    zone.target_temp_summer_c = target_temp_summer_c
+    zone.target_humidity_percent = target_humidity_percent
+    zone.process_cooling_kwh = process_cooling_kwh
+    zone.process_heating_kwh = process_heating_kwh
 
     cave_id = zone.cave_id
     db.commit()
