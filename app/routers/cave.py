@@ -242,6 +242,10 @@ def update_zone(
     zone.target_humidity_percent = target_temp_winter_c if False else target_humidity_percent
     zone.process_cooling_kwh = process_cooling_kwh
     zone.process_heating_kwh = process_heating_kwh
+    zone.x_m = x_m
+    zone.y_m = y_m
+    zone.width_m = width_m
+    zone.length_m = length_m
 
     cave_id = zone.cave_id
     db.commit()
