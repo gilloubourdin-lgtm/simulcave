@@ -1,108 +1,114 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h2>Vue en plan — {{ cave.name }}</h2>
+<h2>Plan thermique — {{ cave.name }}</h2>
 
 <p>
   Dimensions :
-  {{ cave.length_m }} m × {{ cave.width_m }} m × {{ cave.height_m }} m
-</p>
-
-<p>
+  {{ cave.length_m }} m × {{ cave.width_m }} m × {{ cave.height_m }} m<br>
   Région : {{ cave.region }} —
   Altitude : {{ cave.altitude_m }} m
 </p>
 
 <div class="plan-wrapper">
   <svg
-    viewBox="0 0 1000 600"
-    class="cave-plan"
+    width="1000"
+    height="700"
+    style="border:1px solid #ccc; background:white;"
     xmlns="http://www.w3.org/2000/svg"
   >
+    {% set scale = 40 %}
+
     <rect
-      x="80"
-      y="80"
-      width="840"
-      height="420"
+      x="40"
+      y="40"
+      width="{{ cave.length_m * scale }}"
+      height="{{ cave.width_m * scale }}"
       fill="#f8f8f8"
       stroke="#3b1f2b"
       stroke-width="4"
-      rx="8"
+      rx="6"
     />
 
-    <text x="500" y="55" text-anchor="middle" class="plan-label">
+    <text
+      x="{{ 40 + cave.length_m * scale / 2 }}"
+      y="25"
+      text-anchor="middle"
+      font-size="16"
+      font-weight="bold"
+      fill="#3b1f2b"
+    >
       Longueur : {{ cave.length_m }} m
     </text>
 
     <text
-      x="35"
-      y="290"
+      x="20"
+      y="{{ 40 + cave.width_m * scale / 2 }}"
       text-anchor="middle"
-      transform="rotate(-90 35 290)"
-      class="plan-label"
+      transform="rotate(-90 20 {{ 40 + cave.width_m * scale / 2 }})"
+      font-size="16"
+      font-weight="bold"
+      fill="#3b1f2b"
     >
       Largeur : {{ cave.width_m }} m
     </text>
 
-    {% set zone_count = cave.zones|length %}
-    {% set zone_width = 840 / zone_count if zone_count > 0 else 840 %}
-
     {% for zone in cave.zones %}
-      {% set x = 80 + loop.index0 * zone_width %}
-
       <rect
-        x="{{ x }}"
-        y="80"
-        width="{{ zone_width }}"
-        height="420"
-        fill="{% if loop.index is odd %}#ead7dd{% else %}#f3e8ec{% endif %}"
-        stroke="#6b2d3f"
+        x="{{ 40 + zone.x_m * scale }}"
+        y="{{ 40 + zone.y_m * scale }}"
+        width="{{ zone.length_m * scale }}"
+        height="{{ zone.width_m * scale }}"
+        fill="{% if loop.index is odd %}#dbeafe{% else %}#ead7dd{% endif %}"
+        stroke="#1e3a8a"
         stroke-width="2"
+        rx="6"
       />
 
       <text
-        x="{{ x + zone_width / 2 }}"
-        y="170"
-        text-anchor="middle"
-        class="zone-title"
+        x="{{ 50 + zone.x_m * scale }}"
+        y="{{ 70 + zone.y_m * scale }}"
+        font-size="14"
+        font-weight="bold"
+        fill="#111"
       >
         {{ zone.name }}
       </text>
 
       <text
-        x="{{ x + zone_width / 2 }}"
-        y="220"
-        text-anchor="middle"
-        class="zone-text"
-      >
-        Volume : {{ zone.volume_m3|round(1) }} m³
-      </text>
-
-      <text
-        x="{{ x + zone_width / 2 }}"
-        y="260"
-        text-anchor="middle"
-        class="zone-text"
+        x="{{ 50 + zone.x_m * scale }}"
+        y="{{ 95 + zone.y_m * scale }}"
+        font-size="12"
+        fill="#333"
       >
         Hiver : {{ zone.target_temp_winter_c }} °C
       </text>
 
       <text
-        x="{{ x + zone_width / 2 }}"
-        y="300"
-        text-anchor="middle"
-        class="zone-text"
+        x="{{ 50 + zone.x_m * scale }}"
+        y="{{ 115 + zone.y_m * scale }}"
+        font-size="12"
+        fill="#333"
       >
         Été : {{ zone.target_temp_summer_c }} °C
       </text>
 
       <text
-        x="{{ x + zone_width / 2 }}"
-        y="340"
-        text-anchor="middle"
-        class="zone-text"
+        x="{{ 50 + zone.x_m * scale }}"
+        y="{{ 135 + zone.y_m * scale }}"
+        font-size="12"
+        fill="#333"
       >
         HR : {{ zone.target_humidity_percent }} %
+      </text>
+
+      <text
+        x="{{ 50 + zone.x_m * scale }}"
+        y="{{ 155 + zone.y_m * scale }}"
+        font-size="12"
+        fill="#333"
+      >
+        {{ zone.length_m|round(1) }} × {{ zone.width_m|round(1) }} m
       </text>
     {% endfor %}
   </svg>
@@ -114,6 +120,10 @@
   <thead>
     <tr>
       <th>Zone</th>
+      <th>X [m]</th>
+      <th>Y [m]</th>
+      <th>Longueur [m]</th>
+      <th>Largeur [m]</th>
       <th>Volume [m³]</th>
       <th>Temp. hiver [°C]</th>
       <th>Temp. été [°C]</th>
@@ -124,6 +134,10 @@
     {% for zone in cave.zones %}
     <tr>
       <td>{{ zone.name }}</td>
+      <td>{{ zone.x_m|round(1) }}</td>
+      <td>{{ zone.y_m|round(1) }}</td>
+      <td>{{ zone.length_m|round(1) }}</td>
+      <td>{{ zone.width_m|round(1) }}</td>
       <td>{{ zone.volume_m3|round(1) }}</td>
       <td>{{ zone.target_temp_winter_c }}</td>
       <td>{{ zone.target_temp_summer_c }}</td>

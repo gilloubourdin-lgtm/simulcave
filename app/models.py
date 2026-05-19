@@ -76,6 +76,11 @@ class Zone(Base):
 
     name = Column(String, nullable=False)
     volume_m3 = Column(Float, nullable=False)
+    x_m = Column(Float, default=0)
+    y_m = Column(Float, default=0)
+
+    width_m = Column(Float, default=1)
+    length_m = Column(Float, default=1)
 
     target_temp_winter_c = Column(Float, nullable=False)
     target_temp_summer_c = Column(Float, nullable=False)

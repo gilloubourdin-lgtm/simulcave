@@ -172,6 +172,8 @@ def create_cave(
     default_zone_volume = total_volume / zone_count
 
     for i in range(zone_count):
+        zone_length = length_m / zone_count
+
         zone = Zone(
             cave_id=cave.id,
             name=f"Zone {i + 1}",
@@ -181,6 +183,10 @@ def create_cave(
             target_humidity_percent=75,
             process_cooling_kwh=0,
             process_heating_kwh=0,
+            x_m=i * zone_length,
+            y_m=0,
+            width_m=width_m,
+            length_m=zone_length,
         )
         db.add(zone)
 
