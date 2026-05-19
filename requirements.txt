@@ -5,5 +5,5 @@ sqlalchemy
 python-multipart
 psycopg2-binary
 weasyprint
-passlib[bcrypt]
+passlib
 itsdangerous

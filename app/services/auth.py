@@ -5,7 +5,7 @@ from itsdangerous import URLSafeSerializer, BadSignature
 
 SECRET_KEY = "change-this-secret-key-in-production"
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 serializer = URLSafeSerializer(SECRET_KEY, salt="simulcave-session")
 
 
