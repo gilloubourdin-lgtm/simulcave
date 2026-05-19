@@ -65,7 +65,16 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-  const monthlyData = {{ result.monthly_results | tojson }};
+  const monthlyData = [
+    {% for month in result.monthly_results %}
+    {
+        month: "{{ month.month }}",
+        outdoor_temp_c: {{ month.outdoor_temp_c }},
+        heating_kwh: {{ month.heating_kwh }},
+        cooling_kwh: {{ month.cooling_kwh }}
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+    ];
 
   const labels = monthlyData.map(x => x.month);
   const heating = monthlyData.map(x => x.heating_kwh);
