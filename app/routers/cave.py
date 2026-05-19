@@ -81,6 +81,9 @@ def create_cave(
     floor_material: str = Form(...),
     floor_u: float = Form(...),
     zone_count: int = Form(...),
+    energy_source: str = Form(...),
+    energy_price_chf_per_kwh: float = Form(...),
+    co2_factor_kg_per_kwh: float = Form(...),
     db: Session = Depends(get_db),
 ):
     if zone_count < 1:
@@ -97,6 +100,9 @@ def create_cave(
         width_m=width_m,
         height_m=height_m,
         buried_factor=buried_factor,
+        energy_source=energy_source,
+        energy_price_chf_per_kwh=energy_price_chf_per_kwh,
+        co2_factor_kg_per_kwh=co2_factor_kg_per_kwh,
     )
 
     db.add(cave)

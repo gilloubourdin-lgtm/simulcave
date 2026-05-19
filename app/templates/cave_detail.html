@@ -23,6 +23,12 @@
   {{ cave.buried_factor }}
 </p>
 
+<h3>Énergie, coûts et CO₂</h3>
+
+<p>Source d’énergie : {{ cave.energy_source }}</p>
+<p>Prix énergie : {{ cave.energy_price_chf_per_kwh }} CHF/kWh</p>
+<p>Facteur CO₂ : {{ cave.co2_factor_kg_per_kwh }} kgCO₂/kWh</p>
+
 <a class="button" href="/caves/{{ cave.id }}/simulate">
   Lancer la simulation
 </a>

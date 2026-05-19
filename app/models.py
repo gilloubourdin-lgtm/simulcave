@@ -33,6 +33,10 @@ class Cave(Base):
         cascade="all, delete-orphan",
     )
 
+    energy_source = Column(String, default="electricity")
+    energy_price_chf_per_kwh = Column(Float, default=0.24)
+    co2_factor_kg_per_kwh = Column(Float, default=0.09)
+
 
 class Wall(Base):
     __tablename__ = "walls"

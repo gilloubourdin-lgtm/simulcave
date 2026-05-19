@@ -122,6 +122,9 @@
   <li>L’inertie thermique n’est pas encore prise en compte.</li>
   <li>Les besoins sont corrigés par un facteur d’inertie selon le matériau des parois.</li>
   <li>Plus le facteur est bas, plus la paroi amortit les variations thermiques.</li>
+  <li>Prix énergie : {{ cave.energy_price_chf_per_kwh }} CHF/kWh.</li>
+  <li>Facteur CO₂ : {{ cave.co2_factor_kg_per_kwh }} kgCO₂/kWh.</li>
+  <li>Source d’énergie : {{ cave.energy_source }}.</li>
 </ul>
 
 <a href="/caves/{{ cave.id }}">Retour à la cave</a>

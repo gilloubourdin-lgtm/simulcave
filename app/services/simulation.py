@@ -123,8 +123,13 @@ def simulate_cave(cave) -> SimulationResult:
     total_cooling_kwh = total_cooling + process_cooling
     total_energy_kwh = total_heating_kwh + total_cooling_kwh
 
-    energy_price = get_energy_price(ENERGY_SOURCE)
-    co2_factor = get_co2_factor(ENERGY_SOURCE)
+    energy_price = getattr(cave, "energy_price_chf_per_kwh", None)
+    if energy_price is None:
+        energy_price = get_energy_price(getattr(cave, "energy_source", "electricity"))
+
+    co2_factor = getattr(cave, "co2_factor_kg_per_kwh", None)
+    if co2_factor is None:
+        co2_factor = get_co2_factor(getattr(cave, "energy_source", "electricity"))
 
     annual_cost_chf = total_energy_kwh * energy_price
     annual_co2_kg = total_energy_kwh * co2_factor
