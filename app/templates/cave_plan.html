@@ -4,56 +4,61 @@
 <h2>Plan thermique — {{ cave.name }}</h2>
 
 <p>
-  Dimensions :
-  {{ cave.length_m }} m × {{ cave.width_m }} m × {{ cave.height_m }} m<br>
-  Région : {{ cave.region }} —
-  Altitude : {{ cave.altitude_m }} m
+  Dimensions : {{ cave.length_m }} m × {{ cave.width_m }} m × {{ cave.height_m }} m<br>
+  Région : {{ cave.region }} — Altitude : {{ cave.altitude_m }} m
 </p>
 
-<div class="plan-wrapper">
-  <svg
-    width="1000"
-    height="700"
-    style="border:1px solid #ccc; background:white;"
-    xmlns="http://www.w3.org/2000/svg"
-  >
-    {% set scale = 40 %}
+<div class="plan-toolbar">
+  <button onclick="zoomPlan(0.8)">− Zoom</button>
+  <button onclick="zoomPlan(1.2)">+ Zoom</button>
+  <button onclick="resetZoom()">Réinitialiser</button>
+</div>
 
-    <rect
-      x="40"
-      y="40"
-      width="{{ cave.length_m * scale }}"
-      height="{{ cave.width_m * scale }}"
-      fill="#f8f8f8"
-      stroke="#3b1f2b"
-      stroke-width="4"
-      rx="6"
-    />
-
-    <text
-      x="{{ 40 + cave.length_m * scale / 2 }}"
-      y="25"
-      text-anchor="middle"
-      font-size="16"
-      font-weight="bold"
-      fill="#3b1f2b"
+<div class="plan-scroll">
+  <div id="planZoom">
+    <svg
+      width="{{ cave.length_m * 40 + 100 }}"
+      height="{{ cave.width_m * 40 + 100 }}"
+      style="border:1px solid #ccc; background:white;"
+      xmlns="http://www.w3.org/2000/svg"
     >
-      Longueur : {{ cave.length_m }} m
-    </text>
+      {% set scale = 40 %}
 
-    <text
-      x="20"
-      y="{{ 40 + cave.width_m * scale / 2 }}"
-      text-anchor="middle"
-      transform="rotate(-90 20 {{ 40 + cave.width_m * scale / 2 }})"
-      font-size="16"
-      font-weight="bold"
-      fill="#3b1f2b"
-    >
-      Largeur : {{ cave.width_m }} m
-    </text>
+      <rect
+        x="40"
+        y="40"
+        width="{{ cave.length_m * scale }}"
+        height="{{ cave.width_m * scale }}"
+        fill="#f8f8f8"
+        stroke="#3b1f2b"
+        stroke-width="4"
+        rx="6"
+      />
 
-    {% for zone in cave.zones %}
+      <text
+        x="{{ 40 + cave.length_m * scale / 2 }}"
+        y="25"
+        text-anchor="middle"
+        font-size="16"
+        font-weight="bold"
+        fill="#3b1f2b"
+      >
+        Longueur : {{ cave.length_m }} m
+      </text>
+
+      <text
+        x="20"
+        y="{{ 40 + cave.width_m * scale / 2 }}"
+        text-anchor="middle"
+        transform="rotate(-90 20 {{ 40 + cave.width_m * scale / 2 }})"
+        font-size="16"
+        font-weight="bold"
+        fill="#3b1f2b"
+      >
+        Largeur : {{ cave.width_m }} m
+      </text>
+
+      {% for zone in cave.zones %}
       <rect
         x="{{ 40 + zone.x_m * scale }}"
         y="{{ 40 + zone.y_m * scale }}"
@@ -65,54 +70,44 @@
         rx="6"
       />
 
-      <text
-        x="{{ 50 + zone.x_m * scale }}"
-        y="{{ 70 + zone.y_m * scale }}"
-        font-size="14"
-        font-weight="bold"
-        fill="#111"
-      >
+      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 70 + zone.y_m * scale }}" font-size="14" font-weight="bold">
         {{ zone.name }}
       </text>
 
-      <text
-        x="{{ 50 + zone.x_m * scale }}"
-        y="{{ 95 + zone.y_m * scale }}"
-        font-size="12"
-        fill="#333"
-      >
+      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 95 + zone.y_m * scale }}" font-size="12">
         Hiver : {{ zone.target_temp_winter_c }} °C
       </text>
 
-      <text
-        x="{{ 50 + zone.x_m * scale }}"
-        y="{{ 115 + zone.y_m * scale }}"
-        font-size="12"
-        fill="#333"
-      >
+      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 115 + zone.y_m * scale }}" font-size="12">
         Été : {{ zone.target_temp_summer_c }} °C
       </text>
 
-      <text
-        x="{{ 50 + zone.x_m * scale }}"
-        y="{{ 135 + zone.y_m * scale }}"
-        font-size="12"
-        fill="#333"
-      >
+      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 135 + zone.y_m * scale }}" font-size="12">
         HR : {{ zone.target_humidity_percent }} %
       </text>
 
-      <text
-        x="{{ 50 + zone.x_m * scale }}"
-        y="{{ 155 + zone.y_m * scale }}"
-        font-size="12"
-        fill="#333"
-      >
+      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 155 + zone.y_m * scale }}" font-size="12">
         {{ zone.length_m|round(1) }} × {{ zone.width_m|round(1) }} m
       </text>
-    {% endfor %}
-  </svg>
+      {% endfor %}
+    </svg>
+  </div>
 </div>
+
+<script>
+let planScale = 1;
+
+function zoomPlan(factor) {
+  planScale = planScale * factor;
+  document.getElementById("planZoom").style.transform = `scale(${planScale})`;
+  document.getElementById("planZoom").style.transformOrigin = "top left";
+}
+
+function resetZoom() {
+  planScale = 1;
+  document.getElementById("planZoom").style.transform = "scale(1)";
+}
+</script>
 
 <h3>Détail des zones</h3>
 
