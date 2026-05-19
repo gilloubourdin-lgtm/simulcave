@@ -3,6 +3,10 @@
 from dataclasses import dataclass
 
 from app.services.weather import MONTHS, HOURS_PER_MONTH, get_weather_for_region
+from app.services.energy_factors import get_energy_price, get_co2_factor
+
+
+ENERGY_SOURCE = "electricity"
 
 
 @dataclass
@@ -16,12 +20,19 @@ class MonthlyResult:
 @dataclass
 class SimulationResult:
     monthly_results: list[MonthlyResult]
+
     heating_kwh: float
     cooling_kwh: float
     process_heating_kwh: float
     process_cooling_kwh: float
+
     total_heating_kwh: float
     total_cooling_kwh: float
+    total_energy_kwh: float
+
+    annual_cost_chf: float
+    annual_co2_kg: float
+    annual_co2_tons: float
 
 
 def cave_volume(cave) -> float:
@@ -72,7 +83,6 @@ def simulate_cave(cave) -> SimulationResult:
 
             for wall in cave.walls:
                 effective_area = wall.area_m2 * zone_ratio
-
                 inertia_factor = getattr(wall, "inertia_factor", 1.0) or 1.0
 
                 month_heating += (
@@ -109,12 +119,26 @@ def simulate_cave(cave) -> SimulationResult:
             )
         )
 
+    total_heating_kwh = total_heating + process_heating
+    total_cooling_kwh = total_cooling + process_cooling
+    total_energy_kwh = total_heating_kwh + total_cooling_kwh
+
+    energy_price = get_energy_price(ENERGY_SOURCE)
+    co2_factor = get_co2_factor(ENERGY_SOURCE)
+
+    annual_cost_chf = total_energy_kwh * energy_price
+    annual_co2_kg = total_energy_kwh * co2_factor
+
     return SimulationResult(
         monthly_results=monthly_results,
         heating_kwh=round(total_heating, 1),
         cooling_kwh=round(total_cooling, 1),
         process_heating_kwh=round(process_heating, 1),
         process_cooling_kwh=round(process_cooling, 1),
-        total_heating_kwh=round(total_heating + process_heating, 1),
-        total_cooling_kwh=round(total_cooling + process_cooling, 1),
+        total_heating_kwh=round(total_heating_kwh, 1),
+        total_cooling_kwh=round(total_cooling_kwh, 1),
+        total_energy_kwh=round(total_energy_kwh, 1),
+        annual_cost_chf=round(annual_cost_chf, 0),
+        annual_co2_kg=round(annual_co2_kg, 1),
+        annual_co2_tons=round(annual_co2_kg / 1000, 2),
     )
