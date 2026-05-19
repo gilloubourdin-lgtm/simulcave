@@ -22,32 +22,37 @@
 
 <h3>Parois</h3>
 
-<table>
-  <thead>
-    <tr>
-      <th>Nom</th>
-      <th>Orientation</th>
-      <th>Matériau</th>
-      <th>Surface [m²]</th>
-      <th>U [W/m²K]</th>
-      <th>Épaisseur [m]</th>
-      <th>Facteur inertie</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for wall in cave.walls %}
-    <tr>
-      <td>{{ wall.name }}</td>
-      <td>{{ wall.orientation }}</td>
-      <td>{{ wall.material }}</td>
-      <td>{{ wall.area_m2 }}</td>
-      <td>{{ wall.u_value }}</td>
-      <td>{{ wall.thickness_m }}</td>
-      <td>{{ wall.inertia_factor }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% for wall in cave.walls %}
+<form method="post" action="/walls/{{ wall.id }}/update" class="zone-card">
+  <h4>{{ wall.name }} — {{ wall.orientation }}</h4>
+
+  <label>Matériau</label>
+  <select name="material">
+    <option {% if wall.material == "Pierre" %}selected{% endif %}>Pierre</option>
+    <option {% if wall.material == "Brique" %}selected{% endif %}>Brique</option>
+    <option {% if wall.material == "Béton" %}selected{% endif %}>Béton</option>
+    <option {% if wall.material == "Bois" %}selected{% endif %}>Bois</option>
+    <option {% if wall.material == "Métal-bois" %}selected{% endif %}>Métal-bois</option>
+    <option {% if wall.material == "Panneau isolé" %}selected{% endif %}>Panneau isolé</option>
+    <option {% if wall.material == "Terre battue" %}selected{% endif %}>Terre battue</option>
+    <option {% if wall.material == "Dalle isolée" %}selected{% endif %}>Dalle isolée</option>
+  </select>
+
+  <label>Surface [m²]</label>
+  <input type="number" step="0.1" name="area_m2" value="{{ wall.area_m2 }}" required>
+
+  <label>Valeur U [W/m²K]</label>
+  <input type="number" step="0.01" name="u_value" value="{{ wall.u_value }}" required>
+
+  <label>Épaisseur [m]</label>
+  <input type="number" step="0.01" name="thickness_m" value="{{ wall.thickness_m }}" required>
+
+  <label>Facteur inertie</label>
+  <input type="number" step="0.01" name="inertia_factor" value="{{ wall.inertia_factor }}" required>
+
+  <button type="submit">Mettre à jour la paroi</button>
+</form>
+{% endfor %}
 
 <h3>Zones thermiques</h3>
 

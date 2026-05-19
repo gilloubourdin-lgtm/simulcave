@@ -437,6 +437,40 @@ def cave_parameters(
         },
     )
 
+@router.post("/walls/{wall_id}/update")
+def update_wall(
+    wall_id: int,
+    material: str = Form(...),
+    area_m2: float = Form(...),
+    u_value: float = Form(...),
+    thickness_m: float = Form(...),
+    inertia_factor: float = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    wall = db.query(Wall).join(Cave).filter(
+        Wall.id == wall_id,
+        Cave.user_id == current_user.id,
+    ).first()
+
+    if not wall:
+        raise HTTPException(status_code=404, detail="Paroi introuvable.")
+
+    wall.material = material
+    wall.area_m2 = area_m2
+    wall.u_value = u_value
+    wall.thickness_m = thickness_m
+    wall.inertia_factor = inertia_factor
+
+    cave_id = wall.cave_id
+
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/caves/{cave_id}",
+        status_code=303,
+    )
+
 @router.post("/caves/{cave_id}/delete")
 def delete_cave(
     cave_id: int,
