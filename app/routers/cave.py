@@ -499,6 +499,53 @@ def update_wall(
         status_code=303,
     )
 
+@router.get("/dashboard")
+def dashboard(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    caves = db.query(Cave).filter(
+        Cave.user_id == current_user.id,
+    ).all()
+
+    total_energy = 0
+    total_cost = 0
+    total_co2 = 0
+    cave_count = len(caves)
+
+    results = []
+
+    for cave in caves:
+        result = simulate_cave(cave)
+
+        total_energy += result.total_energy_kwh
+        total_cost += result.annual_cost_chf
+        total_co2 += result.annual_co2_tons
+
+        results.append({
+            "cave": cave,
+            "result": result,
+        })
+
+    results_sorted = sorted(
+        results,
+        key=lambda x: x["result"].total_energy_kwh,
+        reverse=True,
+    )
+
+    return render_template(
+        request,
+        "dashboard.html",
+        {
+            "cave_count": cave_count,
+            "total_energy": round(total_energy, 1),
+            "total_cost": round(total_cost, 0),
+            "total_co2": round(total_co2, 2),
+            "results": results_sorted,
+        },
+    )
+
 @router.post("/caves/{cave_id}/delete")
 def delete_cave(
     cave_id: int,
