@@ -6,7 +6,8 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Cave, Wall, Zone
+from app.models import Cave, Wall, Zone, User
+from app.routers.auth import require_user
 from app.services.simulation import simulate_cave
 from app.services.materials import get_material_properties
 from app.services.renovation import (
@@ -16,10 +17,7 @@ from app.services.renovation import (
 from app.services.pdf import generate_cave_report_pdf
 
 router = APIRouter()
-
-templates = Jinja2Templates(
-    directory="app/templates"
-)
+templates = Jinja2Templates(directory="app/templates")
 
 
 def render_template(
@@ -37,14 +35,36 @@ def render_template(
     )
 
 
+def get_user_cave(
+    db: Session,
+    cave_id: int,
+    current_user: User,
+) -> Cave:
+    cave = db.query(Cave).filter(
+        Cave.id == cave_id,
+        Cave.user_id == current_user.id,
+    ).first()
+
+    if not cave:
+        raise HTTPException(status_code=404, detail="Cave introuvable.")
+
+    return cave
+
+
 @router.get("/")
 def home():
-    return RedirectResponse(url="/caves", status_code=303)
+    return RedirectResponse(url="/login", status_code=303)
 
 
 @router.get("/caves")
-def caves_list(request: Request, db: Session = Depends(get_db)):
-    caves = db.query(Cave).all()
+def caves_list(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    caves = db.query(Cave).filter(
+        Cave.user_id == current_user.id,
+    ).all()
 
     return render_template(
         request,
@@ -52,100 +72,12 @@ def caves_list(request: Request, db: Session = Depends(get_db)):
         {"caves": caves},
     )
 
-@router.get("/caves/{cave_id}/renovation/custom")
-def renovation_custom_form(
-    cave_id: int,
-    request: Request,
-    db: Session = Depends(get_db),
-):
-    cave = db.query(Cave).filter(Cave.id == cave_id).first()
-
-    if not cave:
-        raise HTTPException(status_code=404, detail="Cave introuvable.")
-
-    return render_template(
-        request,
-        "renovation_custom_form.html",
-        {"cave": cave},
-    )
-
-
-@router.post("/caves/{cave_id}/renovation/custom")
-def renovation_custom_result(
-    cave_id: int,
-    request: Request,
-    scenario_name: str = Form(...),
-    investment_chf: float = Form(...),
-    roof_reduction_percent: float = Form(...),
-    walls_reduction_percent: float = Form(...),
-    floor_reduction_percent: float = Form(...),
-    db: Session = Depends(get_db),
-):
-    cave = db.query(Cave).filter(Cave.id == cave_id).first()
-
-    if not cave:
-        raise HTTPException(status_code=404, detail="Cave introuvable.")
-
-    def wall_filter(wall):
-        if wall.name == "Toiture" and roof_reduction_percent > 0:
-            return True
-
-        if wall.orientation in ["N", "S", "E", "O"] and walls_reduction_percent > 0:
-            return True
-
-        if wall.name == "Sol" and floor_reduction_percent > 0:
-            return True
-
-        return False
-
-    # Réduction moyenne pondérée simple.
-    # Exemple : 30 % de réduction U => facteur 0.70.
-    reductions = []
-
-    if roof_reduction_percent > 0:
-        reductions.append(roof_reduction_percent)
-
-    if walls_reduction_percent > 0:
-        reductions.append(walls_reduction_percent)
-
-    if floor_reduction_percent > 0:
-        reductions.append(floor_reduction_percent)
-
-    if reductions:
-        average_reduction_percent = sum(reductions) / len(reductions)
-    else:
-        average_reduction_percent = 0
-
-    reduction_factor = 1 - (average_reduction_percent / 100)
-
-    scenario = calculate_scenario(
-        cave=cave,
-        name=scenario_name,
-        description=(
-            f"Toiture: -{roof_reduction_percent} %, "
-            f"murs: -{walls_reduction_percent} %, "
-            f"sol: -{floor_reduction_percent} % sur les valeurs U."
-        ),
-        investment_chf=investment_chf,
-        wall_filter=wall_filter,
-        reduction_factor=reduction_factor,
-    )
-
-    return render_template(
-        request,
-        "renovation_custom_result.html",
-        {
-            "cave": cave,
-            "scenario": scenario,
-            "roof_reduction_percent": roof_reduction_percent,
-            "walls_reduction_percent": walls_reduction_percent,
-            "floor_reduction_percent": floor_reduction_percent,
-        },
-    )
-
 
 @router.get("/caves/new")
-def cave_form(request: Request):
+def cave_form(
+    request: Request,
+    current_user: User = Depends(require_user),
+):
     return render_template(
         request,
         "cave_form.html",
@@ -178,6 +110,7 @@ def create_cave(
     energy_price_chf_per_kwh: float = Form(...),
     co2_factor_kg_per_kwh: float = Form(...),
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
     if zone_count < 1:
         raise HTTPException(
@@ -187,6 +120,7 @@ def create_cave(
 
     cave = Cave(
         name=name,
+        user_id=current_user.id,
         region=region,
         altitude_m=altitude_m,
         length_m=length_m,
@@ -263,11 +197,9 @@ def cave_detail(
     cave_id: int,
     request: Request,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
-    cave = db.query(Cave).filter(Cave.id == cave_id).first()
-
-    if not cave:
-        raise HTTPException(status_code=404, detail="Cave introuvable.")
+    cave = get_user_cave(db, cave_id, current_user)
 
     return render_template(
         request,
@@ -287,8 +219,12 @@ def update_zone(
     process_cooling_kwh: float = Form(...),
     process_heating_kwh: float = Form(...),
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
-    zone = db.query(Zone).filter(Zone.id == zone_id).first()
+    zone = db.query(Zone).join(Cave).filter(
+        Zone.id == zone_id,
+        Cave.user_id == current_user.id,
+    ).first()
 
     if not zone:
         raise HTTPException(status_code=404, detail="Zone introuvable.")
@@ -297,12 +233,11 @@ def update_zone(
     zone.volume_m3 = volume_m3
     zone.target_temp_winter_c = target_temp_winter_c
     zone.target_temp_summer_c = target_temp_summer_c
-    zone.target_humidity_percent = target_humidity_percent
+    zone.target_humidity_percent = target_temp_winter_c if False else target_humidity_percent
     zone.process_cooling_kwh = process_cooling_kwh
     zone.process_heating_kwh = process_heating_kwh
 
     cave_id = zone.cave_id
-
     db.commit()
 
     return RedirectResponse(
@@ -316,12 +251,9 @@ def simulate(
     cave_id: int,
     request: Request,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
-    cave = db.query(Cave).filter(Cave.id == cave_id).first()
-
-    if not cave:
-        raise HTTPException(status_code=404, detail="Cave introuvable.")
-
+    cave = get_user_cave(db, cave_id, current_user)
     result = simulate_cave(cave)
 
     return render_template(
@@ -333,17 +265,15 @@ def simulate(
         },
     )
 
+
 @router.get("/caves/{cave_id}/renovation")
 def renovation(
     cave_id: int,
     request: Request,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
-    cave = db.query(Cave).filter(Cave.id == cave_id).first()
-
-    if not cave:
-        raise HTTPException(status_code=404, detail="Cave introuvable.")
-
+    cave = get_user_cave(db, cave_id, current_user)
     scenarios = generate_renovation_scenarios(cave)
 
     return render_template(
@@ -355,17 +285,97 @@ def renovation(
         },
     )
 
+
+@router.get("/caves/{cave_id}/renovation/custom")
+def renovation_custom_form(
+    cave_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+
+    return render_template(
+        request,
+        "renovation_custom_form.html",
+        {"cave": cave},
+    )
+
+
+@router.post("/caves/{cave_id}/renovation/custom")
+def renovation_custom_result(
+    cave_id: int,
+    request: Request,
+    scenario_name: str = Form(...),
+    investment_chf: float = Form(...),
+    roof_reduction_percent: float = Form(...),
+    walls_reduction_percent: float = Form(...),
+    floor_reduction_percent: float = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+
+    def wall_filter(wall):
+        if wall.name == "Toiture" and roof_reduction_percent > 0:
+            return True
+
+        if wall.orientation in ["N", "S", "E", "O"] and walls_reduction_percent > 0:
+            return True
+
+        if wall.name == "Sol" and floor_reduction_percent > 0:
+            return True
+
+        return False
+
+    reductions = []
+
+    if roof_reduction_percent > 0:
+        reductions.append(roof_reduction_percent)
+
+    if walls_reduction_percent > 0:
+        reductions.append(walls_reduction_percent)
+
+    if floor_reduction_percent > 0:
+        reductions.append(floor_reduction_percent)
+
+    average_reduction_percent = sum(reductions) / len(reductions) if reductions else 0
+    reduction_factor = 1 - (average_reduction_percent / 100)
+
+    scenario = calculate_scenario(
+        cave=cave,
+        name=scenario_name,
+        description=(
+            f"Toiture: -{roof_reduction_percent} %, "
+            f"murs: -{walls_reduction_percent} %, "
+            f"sol: -{floor_reduction_percent} % sur les valeurs U."
+        ),
+        investment_chf=investment_chf,
+        wall_filter=wall_filter,
+        reduction_factor=reduction_factor,
+    )
+
+    return render_template(
+        request,
+        "renovation_custom_result.html",
+        {
+            "cave": cave,
+            "scenario": scenario,
+            "roof_reduction_percent": roof_reduction_percent,
+            "walls_reduction_percent": walls_reduction_percent,
+            "floor_reduction_percent": floor_reduction_percent,
+        },
+    )
+
+
 @router.get("/caves/{cave_id}/report/pdf")
 def cave_report_pdf(
     cave_id: int,
     request: Request,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
-    cave = db.query(Cave).filter(Cave.id == cave_id).first()
-
-    if not cave:
-        raise HTTPException(status_code=404, detail="Cave introuvable.")
-
+    cave = get_user_cave(db, cave_id, current_user)
     pdf_bytes = generate_cave_report_pdf(request, cave)
 
     filename = f"rapport_simulcave_{cave.id}.pdf"
@@ -378,15 +388,16 @@ def cave_report_pdf(
         },
     )
 
+
 @router.post("/caves/{cave_id}/delete")
 def delete_cave(
     cave_id: int,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
-    cave = db.query(Cave).filter(Cave.id == cave_id).first()
+    cave = get_user_cave(db, cave_id, current_user)
 
-    if cave:
-        db.delete(cave)
-        db.commit()
+    db.delete(cave)
+    db.commit()
 
     return RedirectResponse(url="/caves", status_code=303)

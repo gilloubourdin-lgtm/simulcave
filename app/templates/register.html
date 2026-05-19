@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Créer un compte</h2>
+
+{% if error %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/register">
+  <label>Email</label>
+  <input type="email" name="email" required>
+
+  <label>Mot de passe</label>
+  <input type="password" name="password" required>
+
+  <label>Confirmer le mot de passe</label>
+  <input type="password" name="password_confirm" required>
+
+  <button type="submit">Créer le compte</button>
+</form>
+
+<p>
+  Déjà un compte ?
+  <a href="/login">Se connecter</a>
+</p>
+{% endblock %}
