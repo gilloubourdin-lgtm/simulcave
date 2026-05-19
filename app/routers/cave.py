@@ -388,6 +388,20 @@ def cave_report_pdf(
         },
     )
 
+@router.get("/caves/{cave_id}/plan")
+def cave_plan(
+    cave_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+
+    return render_template(
+        request,
+        "cave_plan.html",
+        {"cave": cave},
+    )
 
 @router.post("/caves/{cave_id}/delete")
 def delete_cave(

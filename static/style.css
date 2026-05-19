@@ -125,3 +125,33 @@ canvas {
   border: 1px solid #eee;
   border-radius: 8px;
 }
+
+.plan-wrapper {
+  margin: 2rem 0;
+  overflow-x: auto;
+}
+
+.cave-plan {
+  width: 100%;
+  max-width: 1000px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.plan-label {
+  font-size: 24px;
+  fill: #3b1f2b;
+  font-weight: bold;
+}
+
+.zone-title {
+  font-size: 26px;
+  fill: #3b1f2b;
+  font-weight: bold;
+}
+
+.zone-text {
+  font-size: 20px;
+  fill: #333;
+}

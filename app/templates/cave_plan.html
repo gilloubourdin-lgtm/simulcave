@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Vue en plan — {{ cave.name }}</h2>
+
+<p>
+  Dimensions :
+  {{ cave.length_m }} m × {{ cave.width_m }} m × {{ cave.height_m }} m
+</p>
+
+<p>
+  Région : {{ cave.region }} —
+  Altitude : {{ cave.altitude_m }} m
+</p>
+
+<div class="plan-wrapper">
+  <svg
+    viewBox="0 0 1000 600"
+    class="cave-plan"
+    xmlns="http://www.w3.org/2000/svg"
+  >
+    <rect
+      x="80"
+      y="80"
+      width="840"
+      height="420"
+      fill="#f8f8f8"
+      stroke="#3b1f2b"
+      stroke-width="4"
+      rx="8"
+    />
+
+    <text x="500" y="55" text-anchor="middle" class="plan-label">
+      Longueur : {{ cave.length_m }} m
+    </text>
+
+    <text
+      x="35"
+      y="290"
+      text-anchor="middle"
+      transform="rotate(-90 35 290)"
+      class="plan-label"
+    >
+      Largeur : {{ cave.width_m }} m
+    </text>
+
+    {% set zone_count = cave.zones|length %}
+    {% set zone_width = 840 / zone_count if zone_count > 0 else 840 %}
+
+    {% for zone in cave.zones %}
+      {% set x = 80 + loop.index0 * zone_width %}
+
+      <rect
+        x="{{ x }}"
+        y="80"
+        width="{{ zone_width }}"
+        height="420"
+        fill="{% if loop.index is odd %}#ead7dd{% else %}#f3e8ec{% endif %}"
+        stroke="#6b2d3f"
+        stroke-width="2"
+      />
+
+      <text
+        x="{{ x + zone_width / 2 }}"
+        y="170"
+        text-anchor="middle"
+        class="zone-title"
+      >
+        {{ zone.name }}
+      </text>
+
+      <text
+        x="{{ x + zone_width / 2 }}"
+        y="220"
+        text-anchor="middle"
+        class="zone-text"
+      >
+        Volume : {{ zone.volume_m3|round(1) }} m³
+      </text>
+
+      <text
+        x="{{ x + zone_width / 2 }}"
+        y="260"
+        text-anchor="middle"
+        class="zone-text"
+      >
+        Hiver : {{ zone.target_temp_winter_c }} °C
+      </text>
+
+      <text
+        x="{{ x + zone_width / 2 }}"
+        y="300"
+        text-anchor="middle"
+        class="zone-text"
+      >
+        Été : {{ zone.target_temp_summer_c }} °C
+      </text>
+
+      <text
+        x="{{ x + zone_width / 2 }}"
+        y="340"
+        text-anchor="middle"
+        class="zone-text"
+      >
+        HR : {{ zone.target_humidity_percent }} %
+      </text>
+    {% endfor %}
+  </svg>
+</div>
+
+<h3>Détail des zones</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Zone</th>
+      <th>Volume [m³]</th>
+      <th>Temp. hiver [°C]</th>
+      <th>Temp. été [°C]</th>
+      <th>Humidité [%]</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for zone in cave.zones %}
+    <tr>
+      <td>{{ zone.name }}</td>
+      <td>{{ zone.volume_m3|round(1) }}</td>
+      <td>{{ zone.target_temp_winter_c }}</td>
+      <td>{{ zone.target_temp_summer_c }}</td>
+      <td>{{ zone.target_humidity_percent }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<p>
+  <a class="button" href="/caves/{{ cave.id }}">Retour à la cave</a>
+</p>
+{% endblock %}
