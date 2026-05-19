@@ -7,6 +7,93 @@
   Ces scénarios estiment les économies annuelles potentielles liées à l’amélioration de l’enveloppe thermique.
 </p>
 
+<h3>Comparaison visuelle</h3>
+
+<canvas id="energySavedChart" height="120"></canvas>
+<canvas id="moneySavedChart" height="120"></canvas>
+<canvas id="co2SavedChart" height="120"></canvas>
+<canvas id="paybackChart" height="120"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const scenarioLabels = [
+    {% for scenario in scenarios %}
+      "{{ scenario.name }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const energySaved = [
+    {% for scenario in scenarios %}
+      {{ scenario.energy_saved_kwh }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const moneySaved = [
+    {% for scenario in scenarios %}
+      {{ scenario.money_saved_chf }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const co2Saved = [
+    {% for scenario in scenarios %}
+      {{ scenario.co2_saved_kg }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const paybackYears = [
+    {% for scenario in scenarios %}
+      {{ scenario.payback_years if scenario.payback_years else 0 }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  new Chart(document.getElementById('energySavedChart'), {
+    type: 'bar',
+    data: {
+      labels: scenarioLabels,
+      datasets: [{
+        label: 'Économie énergie [kWh/an]',
+        data: energySaved
+      }]
+    }
+  });
+
+  new Chart(document.getElementById('moneySavedChart'), {
+    type: 'bar',
+    data: {
+      labels: scenarioLabels,
+      datasets: [{
+        label: 'Économie financière [CHF/an]',
+        data: moneySaved
+      }]
+    }
+  });
+
+  new Chart(document.getElementById('co2SavedChart'), {
+    type: 'bar',
+    data: {
+      labels: scenarioLabels,
+      datasets: [{
+        label: 'CO₂ évité [kg/an]',
+        data: co2Saved
+      }]
+    }
+  });
+
+  new Chart(document.getElementById('paybackChart'), {
+    type: 'bar',
+    data: {
+      labels: scenarioLabels,
+      datasets: [{
+        label: 'Retour sur investissement [ans]',
+        data: paybackYears
+      }]
+    }
+  });
+</script>
+
+<h3>Tableau des scénarios</h3>
+
 <table>
   <thead>
     <tr>

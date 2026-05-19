@@ -116,3 +116,12 @@ td {
 .kpi.important {
   background: #ead7dd;
 }
+
+canvas {
+  margin: 2rem 0;
+  max-width: 100%;
+  background: #fff;
+  padding: 1rem;
+  border: 1px solid #eee;
+  border-radius: 8px;
+}
