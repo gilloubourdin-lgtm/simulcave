@@ -55,6 +55,52 @@ def get_user_cave(
 def home():
     return RedirectResponse(url="/login", status_code=303)
 
+@router.get("/dashboard")
+def dashboard(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    caves = db.query(Cave).filter(
+        Cave.user_id == current_user.id,
+    ).all()
+
+    total_energy = 0
+    total_cost = 0
+    total_co2 = 0
+    cave_count = len(caves)
+
+    results = []
+
+    for cave in caves:
+        result = simulate_cave(cave)
+
+        total_energy += result.total_energy_kwh
+        total_cost += result.annual_cost_chf
+        total_co2 += result.annual_co2_tons
+
+        results.append({
+            "cave": cave,
+            "result": result,
+        })
+
+    results_sorted = sorted(
+        results,
+        key=lambda x: x["result"].total_energy_kwh,
+        reverse=True,
+    )
+
+    return render_template(
+        request,
+        "dashboard.html",
+        {
+            "cave_count": cave_count,
+            "total_energy": round(total_energy, 1),
+            "total_cost": round(total_cost, 0),
+            "total_co2": round(total_co2, 2),
+            "results": results_sorted,
+        },
+    )
 
 @router.get("/caves")
 def caves_list(
@@ -197,6 +243,33 @@ def create_cave(
         status_code=303,
     )
 
+@router.get("/caves/compare")
+def compare_caves(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    caves = db.query(Cave).filter(
+        Cave.user_id == current_user.id
+    ).all()
+
+    comparison = []
+
+    for cave in caves:
+        result = simulate_cave(cave)
+
+        comparison.append({
+            "cave": cave,
+            "result": result,
+        })
+
+    return render_template(
+        request,
+        "compare_caves.html",
+        {
+            "comparison": comparison,
+        },
+    )
 
 @router.get("/caves/{cave_id}")
 def cave_detail(
@@ -437,34 +510,6 @@ def cave_parameters(
         },
     )
 
-@router.get("/caves/compare")
-def compare_caves(
-    request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_user),
-):
-    caves = db.query(Cave).filter(
-        Cave.user_id == current_user.id
-    ).all()
-
-    comparison = []
-
-    for cave in caves:
-        result = simulate_cave(cave)
-
-        comparison.append({
-            "cave": cave,
-            "result": result,
-        })
-
-    return render_template(
-        request,
-        "compare_caves.html",
-        {
-            "comparison": comparison,
-        },
-    )
-
 @router.post("/walls/{wall_id}/update")
 def update_wall(
     wall_id: int,
@@ -497,53 +542,6 @@ def update_wall(
     return RedirectResponse(
         url=f"/caves/{cave_id}",
         status_code=303,
-    )
-
-@router.get("/dashboard")
-def dashboard(
-    request: Request,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(require_user),
-):
-    caves = db.query(Cave).filter(
-        Cave.user_id == current_user.id,
-    ).all()
-
-    total_energy = 0
-    total_cost = 0
-    total_co2 = 0
-    cave_count = len(caves)
-
-    results = []
-
-    for cave in caves:
-        result = simulate_cave(cave)
-
-        total_energy += result.total_energy_kwh
-        total_cost += result.annual_cost_chf
-        total_co2 += result.annual_co2_tons
-
-        results.append({
-            "cave": cave,
-            "result": result,
-        })
-
-    results_sorted = sorted(
-        results,
-        key=lambda x: x["result"].total_energy_kwh,
-        reverse=True,
-    )
-
-    return render_template(
-        request,
-        "dashboard.html",
-        {
-            "cave_count": cave_count,
-            "total_energy": round(total_energy, 1),
-            "total_cost": round(total_cost, 0),
-            "total_co2": round(total_co2, 2),
-            "results": results_sorted,
-        },
     )
 
 @router.post("/caves/{cave_id}/delete")
