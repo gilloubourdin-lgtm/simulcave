@@ -59,6 +59,7 @@ def cave_form(request: Request):
 def create_cave(
     name: str = Form(...),
     region: str = Form(...),
+    altitude_m: float = Form(...),
     length_m: float = Form(...),
     width_m: float = Form(...),
     height_m: float = Form(...),
@@ -87,6 +88,7 @@ def create_cave(
     cave = Cave(
         name=name,
         region=region,
+        altitude_m=altitude_m,
         length_m=length_m,
         width_m=width_m,
         height_m=height_m,

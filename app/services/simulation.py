@@ -110,3 +110,27 @@ def simulate_cave(cave) -> SimulationResult:
         total_heating_kwh=round(total_heating + process_heating, 1),
         total_cooling_kwh=round(total_cooling + process_cooling, 1),
     )
+
+MONTHS = [
+    "Jan","Fév","Mar","Avr","Mai","Juin",
+    "Juil","Août","Sep","Oct","Nov","Déc"
+]
+
+def monthly_simulation(cave, weather_rows):
+
+    results = []
+
+    for weather in weather_rows:
+
+        heating = max(0, (12 - weather.avg_temp)) * cave.length_m * 40
+
+        cooling = max(0, (weather.avg_temp - 12)) * cave.length_m * 35
+
+        results.append({
+            "month": MONTHS[weather.month - 1],
+            "avg_temp": weather.avg_temp,
+            "heating_kwh": round(heating,1),
+            "cooling_kwh": round(cooling,1)
+        })
+
+    return results

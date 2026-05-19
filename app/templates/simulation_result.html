@@ -58,6 +58,37 @@
   </tbody>
 </table>
 
+<h3>Graphique mensuel</h3>
+
+<canvas id="energyChart" height="120"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+  const monthlyData = {{ result.monthly_results | tojson }};
+
+  const labels = monthlyData.map(x => x.month);
+  const heating = monthlyData.map(x => x.heating_kwh);
+  const cooling = monthlyData.map(x => x.cooling_kwh);
+
+  new Chart(document.getElementById('energyChart'), {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Chauffage [kWh]',
+          data: heating
+        },
+        {
+          label: 'Refroidissement [kWh]',
+          data: cooling
+        }
+      ]
+    }
+  });
+</script>
+
 <h3>Hypothèses actuelles</h3>
 
 <ul>

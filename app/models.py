@@ -12,7 +12,8 @@ class Cave(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, nullable=False)
 
-    region = Column(String, nullable=False, default="romandie")
+    region = Column(String, default="Vaud")
+    altitude_m = Column(Float, default=500)
 
     length_m = Column(Float, nullable=False)
     width_m = Column(Float, nullable=False)
@@ -66,3 +67,15 @@ class Zone(Base):
     process_heating_kwh = Column(Float, default=0.0)
 
     cave = relationship("Cave", back_populates="zones")
+
+class WeatherData(Base):
+    __tablename__ = "weather_data"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    region = Column(String, nullable=False)
+    month = Column(Integer, nullable=False)
+
+    avg_temp = Column(Float, nullable=False)
+    ground_temp = Column(Float, nullable=False)
+    humidity = Column(Float, nullable=False)

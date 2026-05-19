@@ -9,6 +9,8 @@ class CaveCreate(BaseModel):
     width_m: float
     height_m: float
     buried_factor: float
+    region: str
+    altitude_m: float
 
 
 class WallCreate(BaseModel):
