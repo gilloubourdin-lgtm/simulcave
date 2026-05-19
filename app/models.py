@@ -44,6 +44,12 @@ class Cave(Base):
         cascade="all, delete-orphan",
     )
 
+    renovation_scenarios = relationship(
+        "RenovationScenarioDB",
+        back_populates="cave",
+        cascade="all, delete-orphan",
+    )
+
     energy_source = Column(String, default="electricity")
     energy_price_chf_per_kwh = Column(Float, default=0.24)
     co2_factor_kg_per_kwh = Column(Float, default=0.09)
@@ -102,3 +108,18 @@ class WeatherData(Base):
     avg_temp = Column(Float, nullable=False)
     ground_temp = Column(Float, nullable=False)
     humidity = Column(Float, nullable=False)
+
+class RenovationScenarioDB(Base):
+    __tablename__ = "renovation_scenarios"
+
+    id = Column(Integer, primary_key=True, index=True)
+    cave_id = Column(Integer, ForeignKey("caves.id", ondelete="CASCADE"))
+
+    name = Column(String, nullable=False)
+    investment_chf = Column(Float, default=0)
+
+    roof_reduction_percent = Column(Float, default=0)
+    walls_reduction_percent = Column(Float, default=0)
+    floor_reduction_percent = Column(Float, default=0)
+
+    cave = relationship("Cave", back_populates="renovation_scenarios")
