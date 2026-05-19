@@ -9,6 +9,8 @@ from app.database import get_db
 from app.models import Cave, Wall, Zone
 from app.services.simulation import simulate_cave
 
+from app.services.materials import get_material_properties
+
 router = APIRouter()
 
 templates = Jinja2Templates(
@@ -102,56 +104,32 @@ def create_cave(
     wall_height_area_short = width_m * height_m
     roof_floor_area = length_m * width_m
 
-    walls = [
-        Wall(
-            cave_id=cave.id,
-            name="Mur Nord",
-            orientation="N",
-            material=wall_n_material,
-            area_m2=wall_height_area_long,
-            u_value=wall_n_u,
-        ),
-        Wall(
-            cave_id=cave.id,
-            name="Mur Sud",
-            orientation="S",
-            material=wall_s_material,
-            area_m2=wall_height_area_long,
-            u_value=wall_s_u,
-        ),
-        Wall(
-            cave_id=cave.id,
-            name="Mur Est",
-            orientation="E",
-            material=wall_e_material,
-            area_m2=wall_height_area_short,
-            u_value=wall_e_u,
-        ),
-        Wall(
-            cave_id=cave.id,
-            name="Mur Ouest",
-            orientation="O",
-            material=wall_w_material,
-            area_m2=wall_height_area_short,
-            u_value=wall_w_u,
-        ),
-        Wall(
-            cave_id=cave.id,
-            name="Toiture",
-            orientation="H",
-            material=roof_material,
-            area_m2=roof_floor_area,
-            u_value=roof_u,
-        ),
-        Wall(
-            cave_id=cave.id,
-            name="Sol",
-            orientation="B",
-            material=floor_material,
-            area_m2=roof_floor_area,
-            u_value=floor_u,
-        ),
+    wall_inputs = [
+        ("Mur Nord", "N", wall_n_material, wall_height_area_long, wall_n_u),
+        ("Mur Sud", "S", wall_s_material, wall_height_area_long, wall_s_u),
+        ("Mur Est", "E", wall_e_material, wall_height_area_short, wall_e_u),
+        ("Mur Ouest", "O", wall_w_material, wall_height_area_short, wall_w_u),
+        ("Toiture", "H", roof_material, roof_floor_area, roof_u),
+        ("Sol", "B", floor_material, roof_floor_area, floor_u),
     ]
+
+    walls = []
+
+    for wall_name, orientation, material, area, u_value in wall_inputs:
+        props = get_material_properties(material)
+
+        walls.append(
+            Wall(
+                cave_id=cave.id,
+                name=wall_name,
+                orientation=orientation,
+                material=material,
+                area_m2=area,
+                u_value=u_value,
+                thickness_m=props["default_thickness_m"],
+                inertia_factor=props["inertia_factor"],
+            )
+        )
 
     db.add_all(walls)
 

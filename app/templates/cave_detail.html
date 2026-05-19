@@ -37,6 +37,8 @@
       <th>Matériau</th>
       <th>Surface [m²]</th>
       <th>U [W/m²K]</th>
+      <th>Épaisseur [m]</th>
+      <th>Facteur inertie</th>
     </tr>
   </thead>
   <tbody>
@@ -47,6 +49,8 @@
       <td>{{ wall.material }}</td>
       <td>{{ wall.area_m2 }}</td>
       <td>{{ wall.u_value }}</td>
+      <td>{{ wall.thickness_m }}</td>
+      <td>{{ wall.inertia_factor }}</td>
     </tr>
     {% endfor %}
   </tbody>

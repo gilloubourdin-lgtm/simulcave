@@ -44,6 +44,9 @@ class Wall(Base):
     orientation = Column(String, nullable=False)
     material = Column(String, nullable=False)
 
+    thickness_m = Column(Float, default=0.40)
+    inertia_factor = Column(Float, default=1.00)
+
     area_m2 = Column(Float, nullable=False)
     u_value = Column(Float, nullable=False)
 
