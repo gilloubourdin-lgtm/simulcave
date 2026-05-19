@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Comparaison des simulations</h2>
+
+<p>
+  Comparaison énergétique, économique et carbone
+  des caves simulées.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Cave</th>
+      <th>Région</th>
+      <th>Volume [m³]</th>
+      <th>Chaud [kWh/an]</th>
+      <th>Froid [kWh/an]</th>
+      <th>Total énergie [kWh/an]</th>
+      <th>Coût [CHF/an]</th>
+      <th>CO₂ [t/an]</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for item in comparison %}
+
+    {% set cave = item.cave %}
+    {% set result = item.result %}
+
+    <tr>
+      <td>
+        <a href="/caves/{{ cave.id }}">
+          {{ cave.name }}
+        </a>
+      </td>
+
+      <td>{{ cave.region }}</td>
+
+      <td>
+        {{ (cave.length_m * cave.width_m * cave.height_m)|round(0) }}
+      </td>
+
+      <td>{{ result.total_heating_kwh|round(0) }}</td>
+
+      <td>{{ result.total_cooling_kwh|round(0) }}</td>
+
+      <td>{{ result.total_energy_kwh|round(0) }}</td>
+
+      <td>{{ result.annual_cost_chf|round(0) }}</td>
+
+      <td>{{ result.annual_co2_tons|round(2) }}</td>
+    </tr>
+
+    {% endfor %}
+  </tbody>
+</table>
+
+<h3>Graphique comparatif</h3>
+
+<canvas id="comparisonChart" height="120"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const labels = [
+  {% for item in comparison %}
+    "{{ item.cave.name }}",
+  {% endfor %}
+];
+
+const energyData = [
+  {% for item in comparison %}
+    {{ item.result.total_energy_kwh }},
+  {% endfor %}
+];
+
+const costData = [
+  {% for item in comparison %}
+    {{ item.result.annual_cost_chf }},
+  {% endfor %}
+];
+
+new Chart(
+  document.getElementById('comparisonChart'),
+  {
+    type: 'bar',
+
+    data: {
+      labels: labels,
+
+      datasets: [
+        {
+          label: 'Énergie [kWh/an]',
+          data: energyData,
+        },
+
+        {
+          label: 'Coût [CHF/an]',
+          data: costData,
+        }
+      ]
+    },
+
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        }
+      }
+    }
+  }
+);
+</script>
+
+{% endblock %}

@@ -437,6 +437,34 @@ def cave_parameters(
         },
     )
 
+@router.get("/caves/compare")
+def compare_caves(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    caves = db.query(Cave).filter(
+        Cave.user_id == current_user.id
+    ).all()
+
+    comparison = []
+
+    for cave in caves:
+        result = simulate_cave(cave)
+
+        comparison.append({
+            "cave": cave,
+            "result": result,
+        })
+
+    return render_template(
+        request,
+        "compare_caves.html",
+        {
+            "comparison": comparison,
+        },
+    )
+
 @router.post("/walls/{wall_id}/update")
 def update_wall(
     wall_id: int,
