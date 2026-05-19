@@ -11,6 +11,8 @@ from app.services.simulation import simulate_cave
 
 from app.services.materials import get_material_properties
 
+from app.services.renovation import generate_renovation_scenarios
+
 router = APIRouter()
 
 templates = Jinja2Templates(
@@ -232,6 +234,27 @@ def simulate(
         },
     )
 
+@router.get("/caves/{cave_id}/renovation")
+def renovation(
+    cave_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    cave = db.query(Cave).filter(Cave.id == cave_id).first()
+
+    if not cave:
+        raise HTTPException(status_code=404, detail="Cave introuvable.")
+
+    scenarios = generate_renovation_scenarios(cave)
+
+    return render_template(
+        request,
+        "renovation_result.html",
+        {
+            "cave": cave,
+            "scenarios": scenarios,
+        },
+    )
 
 @router.post("/caves/{cave_id}/delete")
 def delete_cave(
