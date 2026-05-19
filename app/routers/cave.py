@@ -1,7 +1,7 @@
 # app/routers/cave.py
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -13,6 +13,7 @@ from app.services.renovation import (
     generate_renovation_scenarios,
     calculate_scenario,
 )
+from app.services.pdf import generate_cave_report_pdf
 
 router = APIRouter()
 
@@ -351,6 +352,29 @@ def renovation(
         {
             "cave": cave,
             "scenarios": scenarios,
+        },
+    )
+
+@router.get("/caves/{cave_id}/report/pdf")
+def cave_report_pdf(
+    cave_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    cave = db.query(Cave).filter(Cave.id == cave_id).first()
+
+    if not cave:
+        raise HTTPException(status_code=404, detail="Cave introuvable.")
+
+    pdf_bytes = generate_cave_report_pdf(request, cave)
+
+    filename = f"rapport_simulcave_{cave.id}.pdf"
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
         },
     )
 
