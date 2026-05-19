@@ -174,3 +174,21 @@ canvas {
 #planZoom {
   display: inline-block;
 }
+
+.site-footer {
+  margin-top: 60px;
+  padding: 25px 10px;
+  border-top: 1px solid #ddd;
+  text-align: center;
+}
+
+.footer-contact {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.footer-copy {
+  font-size: 11px;
+  color: #888;
+}

@@ -3,20 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <title>SimulCave</title>
+
   <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
+
   <header>
     <h1>SimulCave</h1>
+
     <nav>
       <a href="/caves">Caves</a>
       <a href="/caves/new">Nouvelle simulation</a>
-      <a href="/logout">Déconnexion</a>
     </nav>
   </header>
 
   <main>
     {% block content %}{% endblock %}
   </main>
+
+  <footer class="site-footer">
+
+    <p class="footer-contact">
+      Contact : Groupe œnologie, Agroscope Changins —
+      gilles.bourdin@agroscope.admin.ch
+    </p>
+
+    <p class="footer-copy">
+      SimulCave © Agroscope / projet SimulCave —
+      outil d’aide à la décision pour les caves viticoles.
+    </p>
+
+  </footer>
+
 </body>
 </html>
