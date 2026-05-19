@@ -417,6 +417,26 @@ def cave_plan(
         {"cave": cave},
     )
 
+@router.get("/caves/{cave_id}/parameters")
+def cave_parameters(
+    cave_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+
+    result = simulate_cave(cave)
+
+    return render_template(
+        request,
+        "cave_parameters.html",
+        {
+            "cave": cave,
+            "result": result,
+        },
+    )
+
 @router.post("/caves/{cave_id}/delete")
 def delete_cave(
     cave_id: int,
