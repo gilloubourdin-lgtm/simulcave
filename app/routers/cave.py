@@ -15,6 +15,7 @@ from app.services.renovation import (
     calculate_scenario,
 )
 from app.services.pdf import generate_cave_report_pdf
+from app.services.weather import geocode_address
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -134,6 +135,8 @@ def cave_form(
 def create_cave(
     name: str = Form(...),
     region: str = Form(...),
+    address: str = Form(""),
+    use_dynamic_weather: str | None = Form(None),
     altitude_m: float = Form(...),
     length_m: float = Form(...),
     width_m: float = Form(...),
@@ -164,6 +167,16 @@ def create_cave(
             detail="Le nombre de zones doit être au moins 1.",
         )
 
+    latitude = None
+    longitude = None
+    dynamic_weather_enabled = use_dynamic_weather == "true"
+
+    if dynamic_weather_enabled and address:
+        place = geocode_address(address)
+        if place:
+            latitude = place["latitude"]
+            longitude = place["longitude"]
+
     cave = Cave(
         name=name,
         user_id=current_user.id,
@@ -176,6 +189,10 @@ def create_cave(
         energy_source=energy_source,
         energy_price_chf_per_kwh=energy_price_chf_per_kwh,
         co2_factor_kg_per_kwh=co2_factor_kg_per_kwh,
+        address=address,
+        latitude=latitude,
+        longitude=longitude,
+        use_dynamic_weather=dynamic_weather_enabled,
     )
 
     db.add(cave)

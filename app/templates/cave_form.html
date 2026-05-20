@@ -10,15 +10,34 @@
     <label>Nom</label>
     <input type="text" name="name" required>
 
-    <label>Région météo</label>
-    <select name="region" required>
-        <option value="romandie">Romandie</option>
-        <option value="arc_lemanique">Arc lémanique</option>
-        <option value="valais">Valais</option>
-        <option value="tessin">Tessin</option>
-        <option value="suisse_alemanique">Suisse alémanique</option>
-        <option value="alpes">Alpes</option>
-    </select>
+    <h3>Météo et localisation</h3>
+
+      <label>Adresse de la cave</label>
+      <input
+        type="text"
+        name="address"
+        placeholder="Ex. Route de Duillier 50, Changins, Suisse"
+      >
+
+      <label>
+        <input type="checkbox" name="use_dynamic_weather" value="true">
+        Utiliser la météo dynamique Open-Meteo via coordonnées GPS
+      </label>
+
+      <label>Région climatique de secours</label>
+      <select name="region" required>
+        <option value="Vaud">Vaud</option>
+        <option value="Genève">Genève</option>
+        <option value="Valais">Valais</option>
+        <option value="Fribourg">Fribourg</option>
+        <option value="Tessin">Tessin</option>
+        <option value="Zurich">Zurich</option>
+        <option value="Alpes">Alpes</option>
+      </select>
+
+      <label>Altitude [m]</label>
+      <input type="number" step="1" name="altitude_m" value="500" required>
+    
 
     <label>Longueur [m]</label>
     <input type="number" step="0.1" name="length_m" required>
@@ -151,20 +170,6 @@
         required
     >
     </section>
-
-  <label>Région suisse</label>
-  <select name="region" required>
-    <option value="Vaud">Vaud</option>
-    <option value="Genève">Genève</option>
-    <option value="Valais">Valais</option>
-    <option value="Fribourg">Fribourg</option>
-    <option value="Tessin">Tessin</option>
-    <option value="Zurich">Zurich</option>
-    <option value="Alpes">Alpes</option>
-  </select>
-
-  <label>Altitude (m)</label>
-  <input type="number" name="altitude_m" value="500">
 
   <button type="submit">Créer la cave</button>
 </form>

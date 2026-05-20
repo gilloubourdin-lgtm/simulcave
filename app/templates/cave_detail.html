@@ -4,6 +4,25 @@
 <h2>{{ cave.name }}</h2>
 
 <p>Région météo : {{ cave.region }}</p>
+<p>Adresse : {{ cave.address or "Non renseignée" }}</p>
+
+<p>
+  Coordonnées GPS :
+  {% if cave.latitude and cave.longitude %}
+    {{ cave.latitude }}, {{ cave.longitude }}
+  {% else %}
+    Non disponibles
+  {% endif %}
+</p>
+
+<p>
+  Météo dynamique :
+  {% if cave.use_dynamic_weather %}
+    Activée
+  {% else %}
+    Désactivée
+  {% endif %}
+</p>
 <p>Dimensions : {{ cave.length_m }} × {{ cave.width_m }} × {{ cave.height_m }} m</p>
 <p>Volume total : {{ cave.length_m * cave.width_m * cave.height_m }} m³</p>
 <p>Facteur d’enterrement : {{ cave.buried_factor }}</p>
