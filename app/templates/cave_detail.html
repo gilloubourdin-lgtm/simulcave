@@ -149,15 +149,25 @@
 {% endfor %}
 <script>
 const materialDefaults = {
-  "Pierre": { u: 1.8, thickness: 0.60, inertia: 0.75 },
-  "Brique": { u: 1.4, thickness: 0.35, inertia: 0.90 },
-  "Béton": { u: 1.7, thickness: 0.40, inertia: 0.85 },
-  "Bois": { u: 0.8, thickness: 0.20, inertia: 0.95 },
-  "Métal-bois": { u: 1.2, thickness: 0.20, inertia: 1.00 },
-  "Panneau isolé": { u: 0.25, thickness: 0.16, inertia: 0.80 },
-  "Terre battue": { u: 1.5, thickness: 0.50, inertia: 0.70 },
-  "Dalle isolée": { u: 0.35, thickness: 0.30, inertia: 0.75 }
+  "Pierre": { lambda: 1.8, thickness: 0.60, inertia: 0.75 },
+  "Brique": { lambda: 0.7, thickness: 0.35, inertia: 0.90 },
+  "Béton": { lambda: 1.7, thickness: 0.40, inertia: 0.85 },
+  "Bois": { lambda: 0.13, thickness: 0.20, inertia: 0.95 },
+  "Métal-bois": { lambda: 0.30, thickness: 0.20, inertia: 1.00 },
+  "Panneau isolé": { lambda: 0.025, thickness: 0.16, inertia: 0.80 },
+  "Terre battue": { lambda: 1.5, thickness: 0.50, inertia: 0.70 },
+  "Dalle isolée": { lambda: 0.04, thickness: 0.30, inertia: 0.75 }
 };
+
+function calculateU(lambdaValue, thickness) {
+  const rsi = 0.13;
+  const rse = 0.04;
+
+  if (!lambdaValue || !thickness) return 1.4;
+
+  const rTotal = rsi + (thickness / lambdaValue) + rse;
+  return (1 / rTotal).toFixed(2);
+}
 
 document.querySelectorAll("form[action^='/walls/']").forEach(form => {
   const material = form.querySelector("[name='material']");
@@ -165,17 +175,25 @@ document.querySelectorAll("form[action^='/walls/']").forEach(form => {
   const thickness = form.querySelector("[name='thickness_m']");
   const inertia = form.querySelector("[name='inertia_factor']");
 
-  if (!material) return;
+  function updateUFromMaterialAndThickness() {
+    const defaults = materialDefaults[material.value];
+    if (!defaults) return;
+
+    const thicknessValue = parseFloat(thickness.value || defaults.thickness);
+    uValue.value = calculateU(defaults.lambda, thicknessValue);
+    inertia.value = defaults.inertia;
+  }
 
   material.addEventListener("change", () => {
     const defaults = materialDefaults[material.value];
-
     if (!defaults) return;
 
-    uValue.value = defaults.u;
     thickness.value = defaults.thickness;
     inertia.value = defaults.inertia;
+    updateUFromMaterialAndThickness();
   });
+
+  thickness.addEventListener("input", updateUFromMaterialAndThickness);
 });
 </script>
 {% endblock %}
