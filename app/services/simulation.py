@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from app.services.weather import MONTHS, HOURS_PER_MONTH, get_weather_for_region
+from app.services.weather import MONTHS, HOURS_PER_MONTH, get_weather_for_cave
 from app.services.energy_factors import get_energy_price, get_co2_factor
 
 
@@ -65,7 +65,7 @@ def active_month_count(start_month: int, end_month: int) -> int:
 
 
 def simulate_cave(cave) -> SimulationResult:
-    weather = get_weather_for_region(cave.region)
+    weather = get_weather_for_cave(cave)
     monthly_temps = weather["temps"]
 
     monthly_results = []

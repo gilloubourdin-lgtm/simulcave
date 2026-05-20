@@ -23,6 +23,11 @@ class Cave(Base):
     name = Column(String, nullable=False)
     user = relationship("User", back_populates="caves")
 
+    address = Column(String, nullable=True)
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+    use_dynamic_weather = Column(Boolean, default=False)
+
     region = Column(String, default="Vaud")
     altitude_m = Column(Float, default=500)
 
