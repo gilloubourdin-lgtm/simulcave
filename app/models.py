@@ -97,6 +97,11 @@ class Zone(Base):
 
     cave = relationship("Cave", back_populates="zones")
 
+    process_heating_start_month = Column(Integer, default=1)
+    process_heating_end_month = Column(Integer, default=12)
+    process_cooling_start_month = Column(Integer, default=1)
+    process_cooling_end_month = Column(Integer, default=12)
+
 class WeatherData(Base):
     __tablename__ = "weather_data"
 

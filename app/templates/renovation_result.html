@@ -151,25 +151,41 @@
 
 <h3>Scénarios personnalisés enregistrés</h3>
 
-{% if saved_scenarios %}
+{% if saved_scenarios_results %}
 <table>
   <thead>
     <tr>
       <th>Nom</th>
       <th>Investissement [CHF]</th>
+      <th>Économie énergie [kWh/an]</th>
+      <th>Économie [CHF/an]</th>
+      <th>CO₂ évité [kg/an]</th>
+      <th>ROI [ans]</th>
       <th>Réduction toiture [%]</th>
       <th>Réduction murs [%]</th>
       <th>Réduction sol [%]</th>
     </tr>
   </thead>
   <tbody>
-    {% for scenario in saved_scenarios %}
+    {% for item in saved_scenarios_results %}
+    {% set saved = item.saved %}
+    {% set scenario = item.calculated %}
     <tr>
-      <td>{{ scenario.name }}</td>
-      <td>{{ scenario.investment_chf }}</td>
-      <td>{{ scenario.roof_reduction_percent }}</td>
-      <td>{{ scenario.walls_reduction_percent }}</td>
-      <td>{{ scenario.floor_reduction_percent }}</td>
+      <td>{{ saved.name }}</td>
+      <td>{{ saved.investment_chf }}</td>
+      <td>{{ scenario.energy_saved_kwh }}</td>
+      <td>{{ scenario.money_saved_chf }}</td>
+      <td>{{ scenario.co2_saved_kg }}</td>
+      <td>
+        {% if scenario.payback_years %}
+          {{ scenario.payback_years }}
+        {% else %}
+          Non rentable
+        {% endif %}
+      </td>
+      <td>{{ saved.roof_reduction_percent }}</td>
+      <td>{{ saved.walls_reduction_percent }}</td>
+      <td>{{ saved.floor_reduction_percent }}</td>
     </tr>
     {% endfor %}
   </tbody>

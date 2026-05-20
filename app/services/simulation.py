@@ -51,6 +51,19 @@ def calculate_transmission_kwh(
     return wh / 1000
 
 
+def month_is_active(month_number: int, start_month: int, end_month: int) -> bool:
+    if start_month <= end_month:
+        return start_month <= month_number <= end_month
+    return month_number >= start_month or month_number <= end_month
+
+
+def active_month_count(start_month: int, end_month: int) -> int:
+    return sum(
+        1 for m in range(1, 13)
+        if month_is_active(m, start_month, end_month)
+    )
+
+
 def simulate_cave(cave) -> SimulationResult:
     weather = get_weather_for_region(cave.region)
     monthly_temps = weather["temps"]
@@ -65,6 +78,7 @@ def simulate_cave(cave) -> SimulationResult:
     total_volume = cave_volume(cave)
 
     for month_index, outdoor_temp in enumerate(monthly_temps):
+        month_number = month_index + 1
         month_heating = 0
         month_cooling = 0
         hours = HOURS_PER_MONTH[month_index]
@@ -72,8 +86,19 @@ def simulate_cave(cave) -> SimulationResult:
         for zone in cave.zones:
             zone_ratio = zone.volume_m3 / total_volume
 
-            process_heating += (zone.process_heating_kwh or 0) / 12
-            process_cooling += (zone.process_cooling_kwh or 0) / 12
+            heating_start = getattr(zone, "process_heating_start_month", 1) or 1
+            heating_end = getattr(zone, "process_heating_end_month", 12) or 12
+            cooling_start = getattr(zone, "process_cooling_start_month", 1) or 1
+            cooling_end = getattr(zone, "process_cooling_end_month", 12) or 12
+
+            heating_months = active_month_count(heating_start, heating_end)
+            cooling_months = active_month_count(cooling_start, cooling_end)
+
+            if month_is_active(month_number, heating_start, heating_end):
+                process_heating += (zone.process_heating_kwh or 0) / heating_months
+
+            if month_is_active(month_number, cooling_start, cooling_end):
+                process_cooling += (zone.process_cooling_kwh or 0) / cooling_months
 
             target_heating = zone.target_temp_winter_c
             target_cooling = zone.target_temp_summer_c
@@ -119,31 +144,21 @@ def simulate_cave(cave) -> SimulationResult:
             )
         )
 
-    total_heating_kwh = total_heating + process_heating
-    total_cooling_kwh = total_cooling + process_cooling
-    total_energy_kwh = total_heating_kwh + total_cooling_kwh
+        total_energy = total_heating + total_cooling + process_heating + process_cooling
+        annual_cost = total_energy * cave.energy_price_chf_per_kwh
+        annual_co2_kg = total_energy * cave.co2_factor_kg_per_kwh
+        annual_co2_tons = annual_co2_kg / 1000
 
-    energy_price = getattr(cave, "energy_price_chf_per_kwh", None)
-    if energy_price is None:
-        energy_price = get_energy_price(getattr(cave, "energy_source", "electricity"))
-
-    co2_factor = getattr(cave, "co2_factor_kg_per_kwh", None)
-    if co2_factor is None:
-        co2_factor = get_co2_factor(getattr(cave, "energy_source", "electricity"))
-
-    annual_cost_chf = total_energy_kwh * energy_price
-    annual_co2_kg = total_energy_kwh * co2_factor
-
-    return SimulationResult(
-        monthly_results=monthly_results,
-        heating_kwh=round(total_heating, 1),
-        cooling_kwh=round(total_cooling, 1),
-        process_heating_kwh=round(process_heating, 1),
-        process_cooling_kwh=round(process_cooling, 1),
-        total_heating_kwh=round(total_heating_kwh, 1),
-        total_cooling_kwh=round(total_cooling_kwh, 1),
-        total_energy_kwh=round(total_energy_kwh, 1),
-        annual_cost_chf=round(annual_cost_chf, 0),
-        annual_co2_kg=round(annual_co2_kg, 1),
-        annual_co2_tons=round(annual_co2_kg / 1000, 2),
-    )
+        return SimulationResult(
+            monthly_results=monthly_results,
+            heating_kwh=round(total_heating, 1),
+            cooling_kwh=round(total_cooling, 1),
+            process_heating_kwh=round(process_heating, 1),
+            process_cooling_kwh=round(process_cooling, 1),
+            total_heating_kwh=round(total_heating + process_heating, 1),
+            total_cooling_kwh=round(total_cooling + process_cooling, 1),
+            total_energy_kwh=round(total_energy, 1),
+            annual_cost_chf=round(annual_cost, 1),
+            annual_co2_kg=round(annual_co2_kg, 1),
+            annual_co2_tons=round(annual_co2_tons, 2),
+        )

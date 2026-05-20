@@ -233,6 +233,10 @@ def create_cave(
             y_m=0,
             width_m=width_m,
             length_m=zone_length,
+            process_heating_start_month=1,
+            process_heating_end_month=12,
+            process_cooling_start_month=1,
+            process_cooling_end_month=12,
         )
         db.add(zone)
 
@@ -301,6 +305,10 @@ def update_zone(
     target_humidity_percent: float = Form(...),
     process_cooling_kwh: float = Form(0),
     process_heating_kwh: float = Form(0),
+    process_heating_start_month: int = Form(1),
+    process_heating_end_month: int = Form(12),
+    process_cooling_start_month: int = Form(1),
+    process_cooling_end_month: int = Form(12),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
@@ -323,14 +331,15 @@ def update_zone(
     zone.target_humidity_percent = target_humidity_percent
     zone.process_cooling_kwh = process_cooling_kwh
     zone.process_heating_kwh = process_heating_kwh
+    zone.process_heating_start_month = process_heating_start_month
+    zone.process_heating_end_month = process_heating_end_month
+    zone.process_cooling_start_month = process_cooling_start_month
+    zone.process_cooling_end_month = process_cooling_end_month
 
     cave_id = zone.cave_id
     db.commit()
 
-    return RedirectResponse(
-        url=f"/caves/{cave_id}",
-        status_code=303,
-    )
+    return RedirectResponse(url=f"/caves/{cave_id}", status_code=303)
 
 
 @router.get("/caves/{cave_id}/simulate")
@@ -363,7 +372,53 @@ def renovation(
     cave = get_user_cave(db, cave_id, current_user)
 
     scenarios = generate_renovation_scenarios(cave)
-    saved_scenarios = cave.renovation_scenarios
+
+    saved_scenarios_results = []
+
+    for saved in cave.renovation_scenarios:
+        reductions = []
+
+        if saved.roof_reduction_percent > 0:
+            reductions.append(saved.roof_reduction_percent)
+
+        if saved.walls_reduction_percent > 0:
+            reductions.append(saved.walls_reduction_percent)
+
+        if saved.floor_reduction_percent > 0:
+            reductions.append(saved.floor_reduction_percent)
+
+        average_reduction_percent = sum(reductions) / len(reductions) if reductions else 0
+        reduction_factor = 1 - (average_reduction_percent / 100)
+
+        def wall_filter(wall, saved=saved):
+            if wall.name == "Toiture" and saved.roof_reduction_percent > 0:
+                return True
+
+            if wall.orientation in ["N", "S", "E", "O"] and saved.walls_reduction_percent > 0:
+                return True
+
+            if wall.name == "Sol" and saved.floor_reduction_percent > 0:
+                return True
+
+            return False
+
+        calculated = calculate_scenario(
+            cave=cave,
+            name=saved.name,
+            description=(
+                f"Toiture: -{saved.roof_reduction_percent} %, "
+                f"murs: -{saved.walls_reduction_percent} %, "
+                f"sol: -{saved.floor_reduction_percent} %."
+            ),
+            investment_chf=saved.investment_chf,
+            wall_filter=wall_filter,
+            reduction_factor=reduction_factor,
+        )
+
+        saved_scenarios_results.append({
+            "saved": saved,
+            "calculated": calculated,
+        })
 
     return render_template(
         request,
@@ -371,7 +426,7 @@ def renovation(
         {
             "cave": cave,
             "scenarios": scenarios,
-            "saved_scenarios": saved_scenarios,
+            "saved_scenarios_results": saved_scenarios_results,
         },
     )
 

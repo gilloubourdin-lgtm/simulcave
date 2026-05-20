@@ -39,9 +39,7 @@
         x="{{ 40 + cave.length_m * scale / 2 }}"
         y="25"
         text-anchor="middle"
-        font-size="16"
-        font-weight="bold"
-        fill="#3b1f2b"
+        class="plan-axis-label"
       >
         Longueur : {{ cave.length_m }} m
       </text>
@@ -51,9 +49,7 @@
         y="{{ 40 + cave.width_m * scale / 2 }}"
         text-anchor="middle"
         transform="rotate(-90 20 {{ 40 + cave.width_m * scale / 2 }})"
-        font-size="16"
-        font-weight="bold"
-        fill="#3b1f2b"
+        class="plan-axis-label"
       >
         Largeur : {{ cave.width_m }} m
       </text>
@@ -70,23 +66,23 @@
         rx="6"
       />
 
-      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 70 + zone.y_m * scale }}" font-size="14" font-weight="bold">
+      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 80 + zone.y_m * scale }}" class="plan-zone-title">
         {{ zone.name }}
       </text>
 
-      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 95 + zone.y_m * scale }}" font-size="12">
+      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 115 + zone.y_m * scale }}" class="plan-zone-text">
         Hiver : {{ zone.target_temp_winter_c }} °C
       </text>
 
-      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 115 + zone.y_m * scale }}" font-size="12">
+      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 145 + zone.y_m * scale }}" class="plan-zone-text">
         Été : {{ zone.target_temp_summer_c }} °C
       </text>
 
-      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 135 + zone.y_m * scale }}" font-size="12">
+      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 175 + zone.y_m * scale }}" class="plan-zone-text">
         HR : {{ zone.target_humidity_percent }} %
       </text>
 
-      <text x="{{ 50 + zone.x_m * scale }}" y="{{ 155 + zone.y_m * scale }}" font-size="12">
+      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 205 + zone.y_m * scale }}" class="plan-zone-text">
         {{ zone.length_m|round(1) }} × {{ zone.width_m|round(1) }} m
       </text>
       {% endfor %}

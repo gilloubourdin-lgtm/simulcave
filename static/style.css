@@ -131,31 +131,6 @@ canvas {
   overflow-x: auto;
 }
 
-.cave-plan {
-  width: 100%;
-  max-width: 1000px;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-}
-
-.plan-label {
-  font-size: 24px;
-  fill: #3b1f2b;
-  font-weight: bold;
-}
-
-.zone-title {
-  font-size: 26px;
-  fill: #3b1f2b;
-  font-weight: bold;
-}
-
-.zone-text {
-  font-size: 20px;
-  fill: #333;
-}
-
 .plan-toolbar {
   margin: 1rem 0;
   display: flex;
@@ -173,6 +148,23 @@ canvas {
 
 #planZoom {
   display: inline-block;
+}
+
+.plan-axis-label {
+  font-size: 24px;
+  font-weight: bold;
+  fill: #3b1f2b;
+}
+
+.plan-zone-title {
+  font-size: 28px;
+  font-weight: bold;
+  fill: #111;
+}
+
+.plan-zone-text {
+  font-size: 24px;
+  fill: #333;
 }
 
 .site-footer {
