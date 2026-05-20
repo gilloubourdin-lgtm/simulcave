@@ -136,6 +136,8 @@ def create_cave(
     name: str = Form(...),
     region: str = Form(...),
     address: str = Form(""),
+    latitude: float | None = Form(None),
+    longitude: float | None = Form(None),
     use_dynamic_weather: str | None = Form(None),
     altitude_m: float = Form(...),
     length_m: float = Form(...),
@@ -171,11 +173,12 @@ def create_cave(
     longitude = None
     dynamic_weather_enabled = use_dynamic_weather == "true"
 
-    if dynamic_weather_enabled and address:
-        place = geocode_address(address)
-        if place:
-            latitude = place["latitude"]
-            longitude = place["longitude"]
+    if dynamic_weather_enabled:
+        if latitude is None or longitude is None:
+            place = geocode_address(address)
+            if place:
+                latitude = place["latitude"]
+                longitude = place["longitude"]
 
     cave = Cave(
         name=name,

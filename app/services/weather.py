@@ -1,7 +1,11 @@
 # app/services/weather.py
 
-import requests
+from collections import defaultdict
+from datetime import date, timedelta
 from statistics import mean
+
+import requests
+
 
 MONTHS = [
     "Jan", "Fév", "Mar", "Avr", "Mai", "Juin",
@@ -39,6 +43,7 @@ def geocode_address(address: str) -> dict | None:
         "count": 1,
         "language": "fr",
         "format": "json",
+        "countryCode": "CH",
     }
 
     response = requests.get(url, params=params, timeout=10)
@@ -62,35 +67,56 @@ def geocode_address(address: str) -> dict | None:
 
 
 def get_dynamic_weather_monthly(latitude: float, longitude: float) -> dict:
-    url = "https://api.open-meteo.com/v1/forecast"
+    today = date.today()
+
+    # Dernière année complète disponible jusqu’à hier
+    end_date = today - timedelta(days=1)
+    start_date = end_date - timedelta(days=365)
+
+    url = "https://archive-api.open-meteo.com/v1/archive"
 
     params = {
         "latitude": latitude,
         "longitude": longitude,
-        "hourly": "temperature_2m",
-        "forecast_days": 16,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "daily": "temperature_2m_mean",
         "timezone": "Europe/Zurich",
     }
 
-    response = requests.get(url, params=params, timeout=10)
+    response = requests.get(url, params=params, timeout=15)
     response.raise_for_status()
 
     data = response.json()
-    temps = data.get("hourly", {}).get("temperature_2m", [])
+    daily = data.get("daily", {})
+    dates = daily.get("time", [])
+    temps = daily.get("temperature_2m_mean", [])
 
-    if not temps:
-        raise ValueError("Aucune donnée météo Open-Meteo reçue.")
+    if not dates or not temps:
+        raise ValueError("Aucune donnée météo historique Open-Meteo reçue.")
 
-    avg_temp = round(mean(temps), 1)
+    by_month = defaultdict(list)
 
-    # Forecast 16 jours : on l’utilise comme température dynamique du mois courant.
-    # Pour les autres mois, fallback météo régionale.
-    monthly_temps = [avg_temp] * 12
+    for day, temp in zip(dates, temps):
+        if temp is None:
+            continue
+
+        month = int(day[5:7])
+        by_month[month].append(temp)
+
+    monthly_temps = []
+
+    for month in range(1, 13):
+        values = by_month.get(month, [])
+
+        if values:
+            monthly_temps.append(round(mean(values), 1))
+        else:
+            monthly_temps.append(get_weather_for_region("Vaud")["temps"][month - 1])
 
     return {
         "temps": monthly_temps,
-        "source": "open-meteo",
-        "dynamic_avg_temp": avg_temp,
+        "source": "open-meteo-archive",
     }
 
 
