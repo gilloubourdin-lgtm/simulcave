@@ -11,11 +11,11 @@ def send_email(to_email: str, subject: str, body: str):
     smtp_from = os.getenv("SMTP_FROM", smtp_user)
 
     if not smtp_host or not smtp_user or not smtp_password:
-        print("Email non envoyé : SMTP non configuré")
-        print("À :", to_email)
-        print("Sujet :", subject)
+        print("SMTP non configuré.")
+        print("TO:", to_email)
+        print("SUBJECT:", subject)
         print(body)
-        return
+        return False
 
     msg = EmailMessage()
     msg["From"] = smtp_from
@@ -23,7 +23,16 @@ def send_email(to_email: str, subject: str, body: str):
     msg["Subject"] = subject
     msg.set_content(body)
 
-    with smtplib.SMTP(smtp_host, smtp_port) as server:
-        server.starttls()
-        server.login(smtp_user, smtp_password)
-        server.send_message(msg)
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(msg)
+        return True
+
+    except Exception as e:
+        print("Erreur envoi email:", repr(e))
+        print("TO:", to_email)
+        print("SUBJECT:", subject)
+        print(body)
+        return False

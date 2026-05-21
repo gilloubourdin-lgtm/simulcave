@@ -199,11 +199,14 @@ Si vous n'êtes pas à l'origine de cette demande, vous pouvez ignorer cet email
 SimulCave
 """
 
-        send_email(
-            to_email=user.email,
-            subject="Réinitialisation de votre mot de passe SimulCave",
-            body=body,
-        )
+        email_sent = send_email(
+        to_email=user.email,
+        subject="Réinitialisation de votre mot de passe SimulCave",
+        body=body,
+    )
+
+    if not email_sent:
+        print("Lien de réinitialisation:", reset_url)
 
     return templates.TemplateResponse(
         request=request,
