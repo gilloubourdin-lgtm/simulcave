@@ -164,8 +164,9 @@ def logout():
 @router.get("/forgot-password")
 def forgot_password_form(request: Request):
     return templates.TemplateResponse(
-        "forgot_password.html",
-        {"request": request}
+        request=request,
+        name="forgot_password.html",
+        context={},
     )
 
 
@@ -205,9 +206,9 @@ SimulCave
         )
 
     return templates.TemplateResponse(
-        "forgot_password.html",
-        {
-            "request": request,
+        request=request,
+        name="forgot_password.html",
+        context={
             "message": "Si un compte existe avec cette adresse, un email a été envoyé.",
         },
     )
@@ -219,18 +220,18 @@ def reset_password_form(request: Request, token: str):
 
     if not email:
         return templates.TemplateResponse(
-            "reset_password.html",
-            {
-                "request": request,
+            request=request,
+            name="reset_password.html",
+            context={
                 "error": "Lien invalide ou expiré.",
                 "token": token,
             },
         )
 
     return templates.TemplateResponse(
-        "reset_password.html",
-        {
-            "request": request,
+        request=request,
+        name="reset_password.html",
+        context={
             "token": token,
         },
     )
@@ -248,9 +249,9 @@ def reset_password_submit(
 
     if not email:
         return templates.TemplateResponse(
-            "reset_password.html",
-            {
-                "request": request,
+            request=request,
+            name="reset_password.html",
+            context={
                 "error": "Lien invalide ou expiré.",
                 "token": token,
             },
@@ -258,9 +259,9 @@ def reset_password_submit(
 
     if password != password_confirm:
         return templates.TemplateResponse(
-            "reset_password.html",
-            {
-                "request": request,
+            request=request,
+            name="reset_password.html",
+            context={
                 "error": "Les mots de passe ne correspondent pas.",
                 "token": token,
             },
@@ -268,9 +269,9 @@ def reset_password_submit(
 
     if len(password) < 8:
         return templates.TemplateResponse(
-            "reset_password.html",
-            {
-                "request": request,
+            request=request,
+            name="reset_password.html",
+            context={
                 "error": "Le mot de passe doit contenir au moins 8 caractères.",
                 "token": token,
             },
@@ -280,9 +281,9 @@ def reset_password_submit(
 
     if not user:
         return templates.TemplateResponse(
-            "reset_password.html",
-            {
-                "request": request,
+            request=request,
+            name="reset_password.html",
+            context={
                 "error": "Utilisateur introuvable.",
                 "token": token,
             },
