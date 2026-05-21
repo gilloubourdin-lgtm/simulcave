@@ -890,6 +890,40 @@ def update_saved_renovation_scenario(
         status_code=303,
     )
 
+@router.post("/renovation-scenarios/{scenario_id}/duplicate")
+def duplicate_saved_renovation_scenario(
+    scenario_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    scenario = db.query(RenovationScenarioDB).join(Cave).filter(
+        RenovationScenarioDB.id == scenario_id,
+        Cave.user_id == current_user.id,
+    ).first()
+
+    if not scenario:
+        raise HTTPException(
+            status_code=404,
+            detail="Scénario introuvable.",
+        )
+
+    duplicated = RenovationScenarioDB(
+        cave_id=scenario.cave_id,
+        name=f"{scenario.name} - copie",
+        investment_chf=scenario.investment_chf,
+        roof_reduction_percent=scenario.roof_reduction_percent,
+        walls_reduction_percent=scenario.walls_reduction_percent,
+        floor_reduction_percent=scenario.floor_reduction_percent,
+    )
+
+    db.add(duplicated)
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/caves/{scenario.cave_id}/renovation",
+        status_code=303,
+    )
+
 @router.post("/renovation-scenarios/{scenario_id}/delete")
 def delete_saved_renovation_scenario(
     scenario_id: int,
