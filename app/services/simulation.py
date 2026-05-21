@@ -34,6 +34,8 @@ class SimulationResult:
     annual_co2_kg: float
     annual_co2_tons: float
 
+    weather_source: str
+
 
 def cave_volume(cave) -> float:
     volume = cave.length_m * cave.width_m * cave.height_m
@@ -67,6 +69,7 @@ def active_month_count(start_month: int, end_month: int) -> int:
 def simulate_cave(cave) -> SimulationResult:
     weather = get_weather_for_cave(cave)
     monthly_temps = weather["temps"]
+    weather_source = weather.get("source", "région climatique de secours")
 
     monthly_results = []
 
@@ -162,6 +165,7 @@ def simulate_cave(cave) -> SimulationResult:
 
     return SimulationResult(
         monthly_results=monthly_results,
+        weather_source=weather_source,
         heating_kwh=round(total_envelope_heating, 1),
         cooling_kwh=round(total_envelope_cooling, 1),
         process_heating_kwh=round(total_process_heating, 1),

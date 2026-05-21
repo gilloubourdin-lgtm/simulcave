@@ -29,7 +29,9 @@ WEATHER_DATA = {
 
 
 def get_weather_for_region(region: str) -> dict:
-    return WEATHER_DATA.get(region, WEATHER_DATA["Vaud"])
+    weather = WEATHER_DATA.get(region, WEATHER_DATA["Vaud"]).copy()
+    weather["source"] = f"région climatique de secours : {region}"
+    return weather
 
 
 def geocode_address(address: str) -> dict | None:
@@ -160,7 +162,7 @@ def get_dynamic_weather_monthly(latitude: float, longitude: float) -> dict:
 
     return {
         "temps": monthly_temps,
-        "source": "open-meteo-archive",
+        "source": "Open-Meteo historique 12 mois",
     }
 
 

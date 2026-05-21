@@ -2,6 +2,18 @@
 
 {% block content %}
 <h2>Résultat de simulation — {{ cave.name }}</h2>
+<p>
+  <strong>Source météo :</strong> {{ result.weather_source }}<br>
+
+  <strong>Adresse :</strong> {{ cave.address or "Non renseignée" }}<br>
+
+  <strong>Coordonnées GPS :</strong>
+  {% if cave.latitude and cave.longitude %}
+    {{ cave.latitude }}, {{ cave.longitude }}
+  {% else %}
+    Non disponibles
+  {% endif %}
+</p>
 
 <div class="kpi-grid">
   <div class="kpi">
@@ -116,11 +128,11 @@
 <h3>Hypothèses actuelles</h3>
 
 <ul>
-  <li>Calcul mensuel basé sur la température extérieure moyenne mensuelle.</li>
+  <li>Calcul mensuel basé sur la source météo indiquée ci-dessus.</li>
   <li>Si la météo dynamique est activée et que les coordonnées GPS sont disponibles, les températures proviennent d’Open-Meteo historique.</li>
   <li>Si la météo dynamique n’est pas disponible, la région climatique de secours est utilisée.</li>
   <li>Formule enveloppe : Q = U × A × ΔT × heures.</li>
-  <li>Les besoins process chaud/froid sont répartis uniquement sur les mois sélectionnés.</li>
+  <li>Les besoins process chaud/froid sont répartis uniquement sur les mois sélectionnés pour chaque zone.</li>
   <li>Les besoins affichés mensuellement incluent enveloppe + process.</li>
   <li>Les parois sont corrigées par le facteur d’inertie du matériau.</li>
   <li>Prix énergie : {{ cave.energy_price_chf_per_kwh }} CHF/kWh.</li>
