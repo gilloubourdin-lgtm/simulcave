@@ -169,8 +169,6 @@ def create_cave(
             detail="Le nombre de zones doit être au moins 1.",
         )
 
-    latitude = None
-    longitude = None
     dynamic_weather_enabled = use_dynamic_weather == "true"
 
     if dynamic_weather_enabled:

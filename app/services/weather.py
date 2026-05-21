@@ -36,34 +36,78 @@ def geocode_address(address: str) -> dict | None:
     if not address:
         return None
 
-    url = "https://geocoding-api.open-meteo.com/v1/search"
+    # 1) Essai Nominatim / OpenStreetMap pour les vraies adresses
+    try:
+        nominatim_url = "https://nominatim.openstreetmap.org/search"
+        nominatim_params = {
+            "q": address,
+            "format": "json",
+            "limit": 1,
+            "countrycodes": "ch",
+        }
+        headers = {
+            "User-Agent": "SimulCave/1.0 (gilles.bourdin@agroscope.admin.ch)"
+        }
 
-    params = {
-        "name": address,
-        "count": 1,
-        "language": "fr",
-        "format": "json",
-        "countryCode": "CH",
-    }
+        response = requests.get(
+            nominatim_url,
+            params=nominatim_params,
+            headers=headers,
+            timeout=10,
+        )
+        response.raise_for_status()
 
-    response = requests.get(url, params=params, timeout=10)
-    response.raise_for_status()
+        results = response.json()
 
-    data = response.json()
-    results = data.get("results", [])
+        if results:
+            place = results[0]
+            return {
+                "latitude": float(place["lat"]),
+                "longitude": float(place["lon"]),
+                "name": place.get("display_name"),
+                "country": "Switzerland",
+                "admin1": None,
+            }
 
-    if not results:
+    except Exception:
+        pass
+
+    # 2) Secours Open-Meteo pour ville / localité / code postal
+    try:
+        open_meteo_url = "https://geocoding-api.open-meteo.com/v1/search"
+        open_meteo_params = {
+            "name": address,
+            "count": 1,
+            "language": "fr",
+            "format": "json",
+            "countryCode": "CH",
+        }
+
+        response = requests.get(
+            open_meteo_url,
+            params=open_meteo_params,
+            timeout=10,
+        )
+        response.raise_for_status()
+
+        data = response.json()
+        results = data.get("results", [])
+
+        if not results:
+            return None
+
+        place = results[0]
+
+        return {
+            "latitude": place["latitude"],
+            "longitude": place["longitude"],
+            "name": place.get("name"),
+            "country": place.get("country"),
+            "admin1": place.get("admin1"),
+        }
+
+    except Exception:
         return None
-
-    place = results[0]
-
-    return {
-        "latitude": place["latitude"],
-        "longitude": place["longitude"],
-        "name": place.get("name"),
-        "country": place.get("country"),
-        "admin1": place.get("admin1"),
-    }
 
 
 def get_dynamic_weather_monthly(latitude: float, longitude: float) -> dict:
