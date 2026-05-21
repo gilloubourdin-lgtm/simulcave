@@ -76,6 +76,74 @@
     </tr>
   </thead>
 
+  <h3>Bilan annuel par paroi</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Paroi</th>
+        <th>Orientation</th>
+        <th>Matériau</th>
+        <th>Chaud [kWh/an]</th>
+        <th>Froid [kWh/an]</th>
+        <th>Total [kWh/an]</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for wall in result.wall_results %}
+      <tr>
+        <td>{{ wall.wall_name }}</td>
+        <td>{{ wall.orientation }}</td>
+        <td>{{ wall.material }}</td>
+        <td>{{ wall.heating_kwh }}</td>
+        <td>{{ wall.cooling_kwh }}</td>
+        <td>{{ wall.total_kwh }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h3>Graphique par paroi</h3>
+
+  <canvas id="wallChart" height="120"></canvas>
+
+  <script>
+  const wallLabels = [
+    {% for wall in result.wall_results %}
+      "{{ wall.wall_name }}"{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const wallHeating = [
+    {% for wall in result.wall_results %}
+      {{ wall.heating_kwh }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  const wallCooling = [
+    {% for wall in result.wall_results %}
+      {{ wall.cooling_kwh }}{% if not loop.last %},{% endif %}
+    {% endfor %}
+  ];
+
+  new Chart(document.getElementById('wallChart'), {
+    type: 'bar',
+    data: {
+      labels: wallLabels,
+      datasets: [
+        {
+          label: 'Chaud [kWh/an]',
+          data: wallHeating
+        },
+        {
+          label: 'Froid [kWh/an]',
+          data: wallCooling
+        }
+      ]
+    }
+  });
+  </script>
+
   <tbody>
     {% for month in result.monthly_results %}
     <tr>

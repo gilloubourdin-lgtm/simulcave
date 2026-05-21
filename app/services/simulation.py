@@ -13,6 +13,15 @@ class MonthlyResult:
     heating_kwh: float
     cooling_kwh: float
 
+@dataclass
+class WallResult:
+    wall_name: str
+    orientation: str
+    material: str
+    heating_kwh: float
+    cooling_kwh: float
+    total_kwh: float
+
 
 @dataclass
 class SimulationResult:
@@ -33,6 +42,8 @@ class SimulationResult:
 
     weather_source: str
     soil_temperature_c: float
+
+    wall_results: list[WallResult]
 
 
 def cave_volume(cave) -> float:
@@ -101,6 +112,15 @@ def simulate_cave(cave) -> SimulationResult:
 
     total_volume = cave_volume(cave)
 
+    wall_totals = {}
+
+    for wall in cave.walls:
+        wall_totals[wall.id] = {
+            "wall": wall,
+            "heating": 0,
+            "cooling": 0,
+        }
+
     for month_index, outdoor_temp in enumerate(monthly_temps):
         month_number = month_index + 1
         hours = HOURS_PER_MONTH[month_index]
@@ -160,7 +180,7 @@ def simulate_cave(cave) -> SimulationResult:
                 effective_area = wall.area_m2 * zone_ratio
                 inertia_factor = getattr(wall, "inertia_factor", 1.0) or 1.0
 
-                month_envelope_heating += (
+                wall_heating = (
                     calculate_transmission_kwh(
                         u_value=wall.u_value,
                         area_m2=effective_area,
@@ -170,7 +190,7 @@ def simulate_cave(cave) -> SimulationResult:
                     * inertia_factor
                 )
 
-                month_envelope_cooling += (
+                wall_cooling = (
                     calculate_transmission_kwh(
                         u_value=wall.u_value,
                         area_m2=effective_area,
@@ -179,6 +199,12 @@ def simulate_cave(cave) -> SimulationResult:
                     )
                     * inertia_factor
                 )
+
+                month_envelope_heating += wall_heating
+                month_envelope_cooling += wall_cooling
+
+                wall_totals[wall.id]["heating"] += wall_heating
+                wall_totals[wall.id]["cooling"] += wall_cooling
 
         month_total_heating = month_envelope_heating + month_process_heating
         month_total_cooling = month_envelope_cooling + month_process_cooling
@@ -211,6 +237,24 @@ def simulate_cave(cave) -> SimulationResult:
     annual_co2_kg = total_energy * cave.co2_factor_kg_per_kwh
     annual_co2_tons = annual_co2_kg / 1000
 
+    wall_results = []
+
+    for item in wall_totals.values():
+        wall = item["wall"]
+        heating = item["heating"]
+        cooling = item["cooling"]
+
+        wall_results.append(
+            WallResult(
+                wall_name=wall.name,
+                orientation=wall.orientation,
+                material=wall.material,
+                heating_kwh=round(heating, 1),
+                cooling_kwh=round(cooling, 1),
+                total_kwh=round(heating + cooling, 1),
+            )
+        )
+
     return SimulationResult(
         monthly_results=monthly_results,
         heating_kwh=round(total_envelope_heating, 1),
@@ -225,4 +269,5 @@ def simulate_cave(cave) -> SimulationResult:
         annual_co2_tons=round(annual_co2_tons, 2),
         weather_source=weather_source,
         soil_temperature_c=round(soil_temp, 1),
+        wall_results=wall_results,
     )
