@@ -6,7 +6,7 @@ from itsdangerous import URLSafeSerializer, URLSafeTimedSerializer, BadSignature
 SECRET_KEY = os.getenv("APP_SECRET_KEY", "dev-secret-key-change-me")
 
 pwd_context = CryptContext(
-    schemes=["bcrypt", "pbkdf2_sha256"],
+    schemes=["pbkdf2_sha256"],
     deprecated="auto",
 )
 
