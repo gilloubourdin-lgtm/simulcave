@@ -1,5 +1,8 @@
 # app/routers/cave.py
 
+import csv
+import io
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
@@ -649,6 +652,75 @@ def save_custom_renovation_scenario(
     return RedirectResponse(
         url=f"/caves/{cave.id}/renovation",
         status_code=303,
+    )
+
+@router.get("/caves/{cave_id}/export/csv")
+def export_cave_csv(
+    cave_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+    result = simulate_cave(cave)
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";")
+
+    writer.writerow(["SimulCave - Export simulation"])
+    writer.writerow(["Cave", cave.name])
+    writer.writerow(["Région", cave.region])
+    writer.writerow(["Adresse", cave.address or ""])
+    writer.writerow(["Latitude", cave.latitude or ""])
+    writer.writerow(["Longitude", cave.longitude or ""])
+    writer.writerow(["Source météo", result.weather_source])
+    writer.writerow(["Température sol [°C]", result.soil_temperature_c])
+    writer.writerow([])
+
+    writer.writerow([
+        "Mois",
+        "Température extérieure [°C]",
+        "Température effective [°C]",
+        "Chaud [kWh]",
+        "Froid [kWh]",
+    ])
+
+    for month in result.monthly_results:
+        writer.writerow([
+            month.month,
+            month.outdoor_temp_c,
+            month.effective_temp_c,
+            month.heating_kwh,
+            month.cooling_kwh,
+        ])
+
+    writer.writerow([])
+    writer.writerow([
+        "Paroi",
+        "Orientation",
+        "Matériau",
+        "Chaud [kWh/an]",
+        "Froid [kWh/an]",
+        "Total [kWh/an]",
+    ])
+
+    for wall in result.wall_results:
+        writer.writerow([
+            wall.wall_name,
+            wall.orientation,
+            wall.material,
+            wall.heating_kwh,
+            wall.cooling_kwh,
+            wall.total_kwh,
+        ])
+
+    csv_content = output.getvalue()
+
+    return Response(
+        content=csv_content,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="simulcave_{cave.id}.csv"'
+        },
     )
 
 @router.post("/caves/{cave_id}/delete")
