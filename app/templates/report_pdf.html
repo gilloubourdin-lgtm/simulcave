@@ -107,6 +107,31 @@
         <td>{{ cave.name }}</td>
       </tr>
       <tr>
+      <tr>
+        <th>Adresse</th>
+        <td>{{ cave.address or "Non renseignée" }}</td>
+      </tr>
+
+      <tr>
+        <th>Coordonnées GPS</th>
+        <td>
+          {% if cave.latitude and cave.longitude %}
+            {{ cave.latitude }}, {{ cave.longitude }}
+          {% else %}
+            Non disponibles
+          {% endif %}
+        </td>
+      </tr>
+
+      <tr>
+        <th>Source météo</th>
+        <td>{{ simulation.weather_source }}</td>
+      </tr>
+
+      <tr>
+        <th>Température sol</th>
+        <td>{{ simulation.soil_temperature_c }} °C</td>
+      </tr>
         <th>Région climatique</th>
         <td>{{ cave.region }}</td>
       </tr>
@@ -180,6 +205,7 @@
       <tr>
         <th>Mois</th>
         <th>Temp. extérieure [°C]</th>
+        <th>Temp. effective [°C]</th>
         <th>Chaud [kWh]</th>
         <th>Froid [kWh]</th>
       </tr>
@@ -189,12 +215,64 @@
       <tr>
         <td>{{ month.month }}</td>
         <td>{{ month.outdoor_temp_c }}</td>
+        <td>{{ month.effective_temp_c }}</td>
         <td>{{ month.heating_kwh }}</td>
         <td>{{ month.cooling_kwh }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+
+  <h2>Bilan annuel par paroi</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Paroi</th>
+        <th>Orientation</th>
+        <th>Matériau</th>
+        <th>Chaud [kWh/an]</th>
+        <th>Froid [kWh/an]</th>
+        <th>Total [kWh/an]</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for wall in simulation.wall_results %}
+      <tr>
+        <td>{{ wall.wall_name }}</td>
+        <td>{{ wall.orientation }}</td>
+        <td>{{ wall.material }}</td>
+        <td>{{ wall.heating_kwh }}</td>
+        <td>{{ wall.cooling_kwh }}</td>
+        <td>{{ wall.total_kwh }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Recommandations automatiques</h2>
+
+  {% set sorted_walls = simulation.wall_results|sort(attribute="total_kwh", reverse=True) %}
+
+  {% if sorted_walls %}
+  <ol>
+    {% for wall in sorted_walls[:3] %}
+    <li>
+      <strong>{{ wall.wall_name }}</strong>
+      — {{ wall.total_kwh }} kWh/an.
+      {% if wall.wall_name == "Toiture" %}
+        Vérifier prioritairement l’isolation de toiture.
+      {% elif wall.wall_name == "Sol" %}
+        Analyser le contact avec le terrain et l’isolation du sol.
+      {% else %}
+        Envisager une amélioration de l’isolation de cette paroi.
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ol>
+  {% else %}
+  <p>Aucune recommandation disponible.</p>
+  {% endif %}
 
   <div class="page-break"></div>
 
@@ -237,11 +315,14 @@
   <h2>5. Hypothèses</h2>
 
   <ul>
-    <li>Calcul mensuel basé sur les températures moyennes régionales.</li>
+    <li>Calcul mensuel basé sur la source météo indiquée dans le rapport.</li>
+    <li>La météo dynamique utilise les coordonnées GPS de la cave lorsqu’elles sont disponibles.</li>
+    <li>Si la météo dynamique n’est pas disponible, la région climatique de secours est utilisée.</li>
+    <li>Température effective = température extérieure, température sol ou combinaison des deux selon le type de paroi et le facteur d’enterrement.</li>
     <li>Formule enveloppe : Q = U × A × ΔT × heures.</li>
-    <li>Les besoins process sont répartis linéairement sur 12 mois.</li>
-    <li>Les matériaux appliquent un facteur d’inertie simplifié.</li>
-    <li>Les coûts et émissions CO₂ utilisent les paramètres de la cave.</li>
+    <li>Les besoins process chaud/froid sont répartis uniquement sur les mois sélectionnés.</li>
+    <li>Les résultats mensuels incluent enveloppe + process.</li>
+    <li>Les parois sont corrigées par le facteur d’inertie du matériau.</li>
   </ul>
 
   <p class="small">
