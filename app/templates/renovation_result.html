@@ -164,6 +164,7 @@
       <th>Réduction toiture [%]</th>
       <th>Réduction murs [%]</th>
       <th>Réduction sol [%]</th>
+      <th>Action</th>
     </tr>
   </thead>
   <tbody>
@@ -186,13 +187,21 @@
       <td>{{ saved.roof_reduction_percent }}</td>
       <td>{{ saved.walls_reduction_percent }}</td>
       <td>{{ saved.floor_reduction_percent }}</td>
+      <td>
+        <form
+          method="post"
+          action="/renovation-scenarios/{{ saved.id }}/delete"
+          onsubmit="return confirm('Supprimer ce scénario ?');"
+        >
+          <button type="submit">Supprimer</button>
+        </form>
+      </td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 {% else %}
 <p>Aucun scénario personnalisé enregistré.</p>
-
 {% endif %}
 
 {% if saved_scenarios_results %}
