@@ -64,12 +64,19 @@ def active_month_count(start_month: int, end_month: int) -> int:
     )
 
 
-def calculate_effective_outdoor_temp(
+def wall_external_temperature(
+    wall,
     outdoor_temp: float,
     soil_temp: float,
     buried_factor: float,
 ) -> float:
     buried_factor = max(0, min(buried_factor, 1))
+
+    if wall.name == "Toiture" or wall.orientation == "H":
+        return outdoor_temp
+
+    if wall.name == "Sol" or wall.orientation == "B":
+        return soil_temp
 
     return (
         outdoor_temp * (1 - buried_factor)
@@ -98,16 +105,12 @@ def simulate_cave(cave) -> SimulationResult:
         month_number = month_index + 1
         hours = HOURS_PER_MONTH[month_index]
 
-        effective_outdoor_temp = calculate_effective_outdoor_temp(
-            outdoor_temp=outdoor_temp,
-            soil_temp=soil_temp,
-            buried_factor=cave.buried_factor,
-        )
-
         month_envelope_heating = 0
         month_envelope_cooling = 0
         month_process_heating = 0
         month_process_cooling = 0
+
+        effective_temperatures = []
 
         for zone in cave.zones:
             zone_ratio = zone.volume_m3 / total_volume
@@ -141,10 +144,19 @@ def simulate_cave(cave) -> SimulationResult:
             target_heating = zone.target_temp_winter_c
             target_cooling = zone.target_temp_summer_c
 
-            delta_heating = max(target_heating - effective_outdoor_temp, 0)
-            delta_cooling = max(effective_outdoor_temp - target_cooling, 0)
-
             for wall in cave.walls:
+                wall_temp = wall_external_temperature(
+                    wall=wall,
+                    outdoor_temp=outdoor_temp,
+                    soil_temp=soil_temp,
+                    buried_factor=cave.buried_factor,
+                )
+
+                effective_temperatures.append(wall_temp)
+
+                delta_heating = max(target_heating - wall_temp, 0)
+                delta_cooling = max(wall_temp - target_cooling, 0)
+
                 effective_area = wall.area_m2 * zone_ratio
                 inertia_factor = getattr(wall, "inertia_factor", 1.0) or 1.0
 
@@ -176,11 +188,16 @@ def simulate_cave(cave) -> SimulationResult:
         total_process_heating += month_process_heating
         total_process_cooling += month_process_cooling
 
+        if effective_temperatures:
+            effective_temp = sum(effective_temperatures) / len(effective_temperatures)
+        else:
+            effective_temp = outdoor_temp
+
         monthly_results.append(
             MonthlyResult(
                 month=MONTHS[month_index],
                 outdoor_temp_c=round(outdoor_temp, 1),
-                effective_temp_c=round(effective_outdoor_temp, 1),
+                effective_temp_c=round(effective_temp, 1),
                 heating_kwh=round(month_total_heating, 1),
                 cooling_kwh=round(month_total_cooling, 1),
             )
