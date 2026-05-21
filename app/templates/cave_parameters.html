@@ -47,10 +47,64 @@
       <th>Région climatique</th>
       <td>{{ cave.region }}</td>
     </tr>
+
     <tr>
       <th>Altitude</th>
       <td>{{ cave.altitude_m }} m</td>
     </tr>
+
+    <tr>
+      <th>Adresse</th>
+      <td>{{ cave.address or "Non renseignée" }}</td>
+    </tr>
+
+    <tr>
+      <th>Coordonnées GPS</th>
+      <td>
+        {% if cave.latitude and cave.longitude %}
+          {{ cave.latitude }}, {{ cave.longitude }}
+        {% else %}
+          Non disponibles
+        {% endif %}
+      </td>
+    </tr>
+
+    <tr>
+      <th>Météo dynamique</th>
+      <td>
+        {% if cave.use_dynamic_weather %}
+          Activée
+        {% else %}
+          Désactivée
+        {% endif %}
+      </td>
+    </tr>
+
+    <tr>
+      <th>Source météo utilisée</th>
+      <td>{{ result.weather_source }}</td>
+    </tr>
+
+  </tbody>
+</table>
+
+<h4>Températures mensuelles utilisées</h4>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mois</th>
+      <th>Température extérieure [°C]</th>
+    </tr>
+  </thead>
+
+  <tbody>
+    {% for month in result.monthly_results %}
+    <tr>
+      <td>{{ month.month }}</td>
+      <td>{{ month.outdoor_temp_c }}</td>
+    </tr>
+    {% endfor %}
   </tbody>
 </table>
 
