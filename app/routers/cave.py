@@ -118,10 +118,21 @@ def caves_list(
         Cave.user_id == current_user.id,
     ).all()
 
+    cave_summaries = []
+
+    for cave in caves:
+        result = simulate_cave(cave)
+
+        cave_summaries.append({
+            "cave": cave,
+            "result": result,
+            "volume_m3": round(cave.length_m * cave.width_m * cave.height_m, 1),
+        })
+
     return render_template(
         request,
         "caves_list.html",
-        {"caves": caves},
+        {"cave_summaries": cave_summaries},
     )
 
 
