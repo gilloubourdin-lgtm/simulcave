@@ -90,6 +90,32 @@ def dashboard(
             "result": result,
         })
 
+    best_cave = None
+    worst_cave = None
+    average_cost = 0
+    average_energy_per_m3 = 0
+
+    if results:
+        best_cave = min(
+            results,
+            key=lambda x: x["result"].total_energy_kwh,
+        )
+
+        worst_cave = max(
+            results,
+            key=lambda x: x["result"].total_energy_kwh,
+        )
+
+        average_cost = total_cost / cave_count
+
+        total_volume = sum(
+            item["cave"].length_m * item["cave"].width_m * item["cave"].height_m
+            for item in results
+        )
+
+        if total_volume > 0:
+            average_energy_per_m3 = total_energy / total_volume
+
     results_sorted = sorted(
         results,
         key=lambda x: x["result"].total_energy_kwh,
@@ -105,6 +131,10 @@ def dashboard(
             "total_cost": round(total_cost, 0),
             "total_co2": round(total_co2, 2),
             "results": results_sorted,
+            "best_cave": best_cave,
+            "worst_cave": worst_cave,
+            "average_cost": round(average_cost, 1),
+            "average_energy_per_m3": round(average_energy_per_m3, 2),
         },
     )
 

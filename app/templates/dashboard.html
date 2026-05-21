@@ -25,6 +25,36 @@
   </div>
 </div>
 
+<div class="kpi-grid">
+  <div class="kpi">
+    <h3>Coût moyen</h3>
+    <p>{{ average_cost }} CHF/cave</p>
+  </div>
+
+  <div class="kpi">
+    <h3>Énergie moyenne volumique</h3>
+    <p>{{ average_energy_per_m3 }} kWh/m³/an</p>
+  </div>
+
+  <div class="kpi">
+    <h3>Cave la plus performante</h3>
+    {% if best_cave %}
+      <p>{{ best_cave.cave.name }}</p>
+    {% else %}
+      <p>-</p>
+    {% endif %}
+  </div>
+
+  <div class="kpi">
+    <h3>Cave la plus énergivore</h3>
+    {% if worst_cave %}
+      <p>{{ worst_cave.cave.name }}</p>
+    {% else %}
+      <p>-</p>
+    {% endif %}
+  </div>
+</div>
+
 <h3>Classement des caves</h3>
 
 <table>
@@ -76,6 +106,28 @@ new Chart(document.getElementById("dashboardChart"), {
     datasets: [{
       label: "Énergie totale [kWh/an]",
       data: energyData
+    }]
+  }
+});
+</script>
+<h3>Graphique CO₂ par cave</h3>
+
+<canvas id="dashboardCo2Chart" height="120"></canvas>
+
+<script>
+const co2Data = [
+  {% for item in results %}
+    {{ item.result.annual_co2_tons }}{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+new Chart(document.getElementById("dashboardCo2Chart"), {
+  type: "bar",
+  data: {
+    labels: labels,
+    datasets: [{
+      label: "CO₂ [t/an]",
+      data: co2Data
     }]
   }
 });
