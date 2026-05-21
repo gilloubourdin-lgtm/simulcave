@@ -90,11 +90,14 @@
 
 <h4>Températures mensuelles utilisées</h4>
 
+<h4>Températures mensuelles utilisées</h4>
+
 <table>
   <thead>
     <tr>
       <th>Mois</th>
       <th>Température extérieure [°C]</th>
+      <th>Température effective [°C]</th>
     </tr>
   </thead>
 
@@ -103,6 +106,7 @@
     <tr>
       <td>{{ month.month }}</td>
       <td>{{ month.outdoor_temp_c }}</td>
+      <td>{{ month.effective_temp_c }}</td>
     </tr>
     {% endfor %}
   </tbody>
@@ -242,6 +246,7 @@
     <tr>
       <th>Mois</th>
       <th>Température extérieure [°C]</th>
+      <th>Température effective [°C]</th>
       <th>Chaud [kWh]</th>
       <th>Froid [kWh]</th>
     </tr>
@@ -251,6 +256,7 @@
     <tr>
       <td>{{ month.month }}</td>
       <td>{{ month.outdoor_temp_c }}</td>
+      <td>{{ month.effective_temp_c }}</td>
       <td>{{ month.heating_kwh }}</td>
       <td>{{ month.cooling_kwh }}</td>
     </tr>

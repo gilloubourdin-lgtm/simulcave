@@ -2,17 +2,18 @@
 
 {% block content %}
 <h2>Résultat de simulation — {{ cave.name }}</h2>
+
 <p>
   <strong>Source météo :</strong> {{ result.weather_source }}<br>
-
   <strong>Adresse :</strong> {{ cave.address or "Non renseignée" }}<br>
-
   <strong>Coordonnées GPS :</strong>
   {% if cave.latitude and cave.longitude %}
     {{ cave.latitude }}, {{ cave.longitude }}
   {% else %}
     Non disponibles
-  {% endif %}
+  {% endif %}<br>
+  <strong>Température sol utilisée :</strong>
+  {{ result.soil_temperature_c }} °C
 </p>
 
 <div class="kpi-grid">
@@ -68,16 +69,19 @@
   <thead>
     <tr>
       <th>Mois</th>
-      <th>Température extérieure moyenne [°C]</th>
+      <th>Température extérieure [°C]</th>
+      <th>Température effective [°C]</th>
       <th>Besoins chaud [kWh]</th>
       <th>Besoins froid [kWh]</th>
     </tr>
   </thead>
+
   <tbody>
     {% for month in result.monthly_results %}
     <tr>
       <td>{{ month.month }}</td>
       <td>{{ month.outdoor_temp_c }}</td>
+      <td>{{ month.effective_temp_c }}</td>
       <td>{{ month.heating_kwh }}</td>
       <td>{{ month.cooling_kwh }}</td>
     </tr>
@@ -95,17 +99,20 @@
   const monthlyData = [
     {% for month in result.monthly_results %}
     {
-        month: "{{ month.month }}",
-        outdoor_temp_c: {{ month.outdoor_temp_c }},
-        heating_kwh: {{ month.heating_kwh }},
-        cooling_kwh: {{ month.cooling_kwh }}
+      month: "{{ month.month }}",
+      outdoor_temp_c: {{ month.outdoor_temp_c }},
+      effective_temp_c: {{ month.effective_temp_c }},
+      heating_kwh: {{ month.heating_kwh }},
+      cooling_kwh: {{ month.cooling_kwh }}
     }{% if not loop.last %},{% endif %}
     {% endfor %}
-    ];
+  ];
 
   const labels = monthlyData.map(x => x.month);
   const heating = monthlyData.map(x => x.heating_kwh);
   const cooling = monthlyData.map(x => x.cooling_kwh);
+  const outdoorTemp = monthlyData.map(x => x.outdoor_temp_c);
+  const effectiveTemp = monthlyData.map(x => x.effective_temp_c);
 
   new Chart(document.getElementById('energyChart'), {
     type: 'line',
@@ -114,13 +121,53 @@
       datasets: [
         {
           label: 'Chauffage [kWh]',
-          data: heating
+          data: heating,
+          yAxisID: 'y'
         },
         {
           label: 'Refroidissement [kWh]',
-          data: cooling
+          data: cooling,
+          yAxisID: 'y'
+        },
+        {
+          label: 'Température extérieure [°C]',
+          data: outdoorTemp,
+          yAxisID: 'y1'
+        },
+        {
+          label: 'Température effective [°C]',
+          data: effectiveTemp,
+          yAxisID: 'y1'
         }
       ]
+    },
+    options: {
+      responsive: true,
+      interaction: {
+        mode: 'index',
+        intersect: false
+      },
+      scales: {
+        y: {
+          type: 'linear',
+          position: 'left',
+          title: {
+            display: true,
+            text: 'Énergie [kWh]'
+          }
+        },
+        y1: {
+          type: 'linear',
+          position: 'right',
+          title: {
+            display: true,
+            text: 'Température [°C]'
+          },
+          grid: {
+            drawOnChartArea: false
+          }
+        }
+      }
     }
   });
 </script>
@@ -131,10 +178,12 @@
   <li>Calcul mensuel basé sur la source météo indiquée ci-dessus.</li>
   <li>Si la météo dynamique est activée et que les coordonnées GPS sont disponibles, les températures proviennent d’Open-Meteo historique.</li>
   <li>Si la météo dynamique n’est pas disponible, la région climatique de secours est utilisée.</li>
+  <li>Température effective = pondération entre température extérieure et température du sol selon le facteur d’enterrement.</li>
   <li>Formule enveloppe : Q = U × A × ΔT × heures.</li>
   <li>Les besoins process chaud/froid sont répartis uniquement sur les mois sélectionnés pour chaque zone.</li>
   <li>Les besoins affichés mensuellement incluent enveloppe + process.</li>
   <li>Les parois sont corrigées par le facteur d’inertie du matériau.</li>
+  <li>Température moyenne du sol utilisée : {{ result.soil_temperature_c }} °C.</li>
   <li>Prix énergie : {{ cave.energy_price_chf_per_kwh }} CHF/kWh.</li>
   <li>Facteur CO₂ : {{ cave.co2_factor_kg_per_kwh }} kgCO₂/kWh.</li>
   <li>Source d’énergie : {{ cave.energy_source }}.</li>
