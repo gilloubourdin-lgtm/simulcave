@@ -312,6 +312,45 @@
     </tbody>
   </table>
 
+  <h2>Scénarios personnalisés enregistrés</h2>
+
+  {% if saved_scenarios_results %}
+  <table>
+    <thead>
+      <tr>
+        <th>Nom</th>
+        <th>Investissement [CHF]</th>
+        <th>Économie énergie [kWh/an]</th>
+        <th>Économie [CHF/an]</th>
+        <th>CO₂ évité [kg/an]</th>
+        <th>ROI [ans]</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in saved_scenarios_results %}
+      {% set saved = item.saved %}
+      {% set scenario = item.calculated %}
+      <tr>
+        <td>{{ saved.name }}</td>
+        <td>{{ saved.investment_chf }}</td>
+        <td>{{ scenario.energy_saved_kwh }}</td>
+        <td>{{ scenario.money_saved_chf }}</td>
+        <td>{{ scenario.co2_saved_kg }}</td>
+        <td>
+          {% if scenario.payback_years %}
+            {{ scenario.payback_years }}
+          {% else %}
+            Non rentable
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Aucun scénario personnalisé enregistré.</p>
+  {% endif %}
+
   <h2>5. Hypothèses</h2>
 
   <ul>
