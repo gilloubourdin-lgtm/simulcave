@@ -20,7 +20,6 @@ from app.services.renovation import (
     calculate_scenario,
 )
 from app.services.pdf import generate_cave_report_pdf
-from app.services.weather import geocode_address
 from app.services.geocoding import geocode_address
 
 router = APIRouter()
@@ -841,6 +840,65 @@ def export_cave_xlsx(
             f"{zone.process_heating_start_month}-{zone.process_heating_end_month}",
             zone.process_cooling_kwh,
             f"{zone.process_cooling_start_month}-{zone.process_cooling_end_month}",
+        ])
+
+    ws_scenarios = wb.create_sheet("Scénarios rénovation")
+
+    ws_scenarios.append([
+        "Nom",
+        "Investissement [CHF]",
+        "Réduction toiture [%]",
+        "Réduction murs [%]",
+        "Réduction sol [%]",
+        "Économie énergie [kWh/an]",
+        "Économie [CHF/an]",
+        "CO₂ évité [kg/an]",
+        "ROI [ans]",
+    ])
+
+    for saved in cave.renovation_scenarios:
+        reductions = []
+
+        if saved.roof_reduction_percent > 0:
+            reductions.append(saved.roof_reduction_percent)
+
+        if saved.walls_reduction_percent > 0:
+            reductions.append(saved.walls_reduction_percent)
+
+        if saved.floor_reduction_percent > 0:
+            reductions.append(saved.floor_reduction_percent)
+
+        average_reduction_percent = sum(reductions) / len(reductions) if reductions else 0
+        reduction_factor = 1 - (average_reduction_percent / 100)
+
+        def wall_filter(wall, saved=saved):
+            if wall.name == "Toiture" and saved.roof_reduction_percent > 0:
+                return True
+            if wall.orientation in ["N", "S", "E", "O"] and saved.walls_reduction_percent > 0:
+                return True
+            if wall.name == "Sol" and saved.floor_reduction_percent > 0:
+                return True
+            return False
+
+        calculated = calculate_scenario(
+            cave=cave,
+            name=saved.name,
+            description="Scénario sauvegardé",
+            investment_chf=saved.investment_chf,
+            wall_filter=wall_filter,
+            reduction_factor=reduction_factor,
+        )
+
+        ws_scenarios.append([
+            saved.name,
+            saved.investment_chf,
+            saved.roof_reduction_percent,
+            saved.walls_reduction_percent,
+            saved.floor_reduction_percent,
+            calculated.energy_saved_kwh,
+            calculated.money_saved_chf,
+            calculated.co2_saved_kg,
+            calculated.payback_years if calculated.payback_years else "Non rentable",
         ])
 
     output = io.BytesIO()
