@@ -192,6 +192,50 @@
 </table>
 {% else %}
 <p>Aucun scénario personnalisé enregistré.</p>
+
+{% endif %}
+
+{% if saved_scenarios_results %}
+<h3>Comparaison graphique des scénarios personnalisés</h3>
+
+<canvas id="savedScenarioChart" height="120"></canvas>
+
+<script>
+const savedScenarioLabels = [
+  {% for item in saved_scenarios_results %}
+    "{{ item.saved.name }}"{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+const savedEnergy = [
+  {% for item in saved_scenarios_results %}
+    {{ item.calculated.energy_saved_kwh }}{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+const savedMoney = [
+  {% for item in saved_scenarios_results %}
+    {{ item.calculated.money_saved_chf }}{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+new Chart(document.getElementById('savedScenarioChart'), {
+  type: 'bar',
+  data: {
+    labels: savedScenarioLabels,
+    datasets: [
+      {
+        label: 'Économie énergie [kWh/an]',
+        data: savedEnergy
+      },
+      {
+        label: 'Économie financière [CHF/an]',
+        data: savedMoney
+      }
+    ]
+  }
+});
+</script>
 {% endif %}
 
 <p>
