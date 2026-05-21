@@ -1,3 +1,5 @@
+# app/main.py
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -8,7 +10,7 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="SimulCave")
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 app.include_router(auth.router)
 app.include_router(cave.router)
