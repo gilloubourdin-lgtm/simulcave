@@ -16,6 +16,7 @@ from app.services.renovation import (
 )
 from app.services.pdf import generate_cave_report_pdf
 from app.services.weather import geocode_address
+from app.services.geocoding import geocode_address
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
