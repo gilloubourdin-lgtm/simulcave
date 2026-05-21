@@ -23,6 +23,12 @@ def send_email(to_email: str, subject: str, body: str):
     msg["Subject"] = subject
     msg.set_content(body)
 
+    print("EMAIL_BACKEND =", os.getenv("EMAIL_BACKEND"))
+    print("SMTP_HOST =", smtp_host)
+    print("SMTP_PORT =", smtp_port)
+    print("SMTP_USER =", smtp_user)
+    print("SMTP_FROM =", smtp_from)
+
     try:
         with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
             server.starttls()
