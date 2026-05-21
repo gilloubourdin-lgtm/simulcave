@@ -184,3 +184,24 @@ canvas {
   font-size: 11px;
   color: #888;
 }
+
+.action-panel {
+  margin: 2rem 0;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.action-panel h3 {
+  margin-top: 0;
+}
+
+.action-group {
+  margin-bottom: 1rem;
+}
+
+.action-group h4 {
+  margin-bottom: 0.5rem;
+  color: #3b1f2b;
+}

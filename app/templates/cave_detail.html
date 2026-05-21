@@ -32,18 +32,29 @@
 <p>Prix énergie : {{ cave.energy_price_chf_per_kwh }} CHF/kWh</p>
 <p>Facteur CO₂ : {{ cave.co2_factor_kg_per_kwh }} kgCO₂/kWh</p>
 
-<a class="button" href="/caves/{{ cave.id }}/simulate">Lancer la simulation</a>
-<a class="button" href="/caves/{{ cave.id }}/renovation">Scénarios rénovation</a>
-<a class="button" href="/caves/{{ cave.id }}/renovation/custom">Scénario personnalisé</a>
-<a class="button" href="/caves/{{ cave.id }}/report/pdf">Télécharger le rapport PDF</a>
-<a class="button" href="/caves/{{ cave.id }}/plan">Vue en plan</a>
-<a class="button" href="/caves/{{ cave.id }}/parameters">Paramètres de simulation</a>
-<a class="button" href="/caves/{{ cave.id }}/export/csv">
-  Export CSV
-</a>
-<a class="button" href="/caves/{{ cave.id }}/export/xlsx">
-  Export Excel
-</a>
+<section class="action-panel">
+  <h3>Actions</h3>
+
+  <div class="action-group">
+    <h4>Simulation</h4>
+    <a class="button" href="/caves/{{ cave.id }}/simulate">Lancer la simulation</a>
+    <a class="button" href="/caves/{{ cave.id }}/parameters">Paramètres de simulation</a>
+    <a class="button" href="/caves/{{ cave.id }}/plan">Vue en plan</a>
+  </div>
+
+  <div class="action-group">
+    <h4>Rénovation</h4>
+    <a class="button" href="/caves/{{ cave.id }}/renovation">Scénarios rénovation</a>
+    <a class="button" href="/caves/{{ cave.id }}/renovation/custom">Scénario personnalisé</a>
+  </div>
+
+  <div class="action-group">
+    <h4>Exports</h4>
+    <a class="button" href="/caves/{{ cave.id }}/report/pdf">Rapport PDF</a>
+    <a class="button" href="/caves/{{ cave.id }}/export/csv">Export CSV</a>
+    <a class="button" href="/caves/{{ cave.id }}/export/xlsx">Export Excel</a>
+  </div>
+</section>
 
 <h3>Parois</h3>
 
