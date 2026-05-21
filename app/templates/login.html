@@ -3,6 +3,12 @@
 {% block content %}
 <h2>Connexion</h2>
 
+{% if request.query_params.get("password_reset") %}
+<div class="alert alert-success">
+    Votre mot de passe a été réinitialisé. Vous pouvez vous connecter.
+</div>
+{% endif %}
+
 {% if error %}
 <div class="alert alert-danger">{{ error }}</div>
 {% endif %}
@@ -16,6 +22,10 @@
 
   <button type="submit">Se connecter</button>
 </form>
+
+<p style="margin-top: 1rem;">
+    <a href="/forgot-password">Mot de passe oublié ?</a>
+</p>
 
 <p>
   Pas encore de compte ?
