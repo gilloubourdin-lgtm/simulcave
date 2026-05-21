@@ -12,55 +12,19 @@
   {% else %}
     Non disponibles
   {% endif %}<br>
-  <strong>Température sol utilisée :</strong>
-  {{ result.soil_temperature_c }} °C
+  <strong>Température sol utilisée :</strong> {{ result.soil_temperature_c }} °C
 </p>
 
 <div class="kpi-grid">
-  <div class="kpi">
-    <h3>Besoins chaud enveloppe</h3>
-    <p>{{ result.heating_kwh }} kWh/an</p>
-  </div>
-
-  <div class="kpi">
-    <h3>Besoins froid enveloppe</h3>
-    <p>{{ result.cooling_kwh }} kWh/an</p>
-  </div>
-
-  <div class="kpi">
-    <h3>Chaud process</h3>
-    <p>{{ result.process_heating_kwh }} kWh/an</p>
-  </div>
-
-  <div class="kpi">
-    <h3>Froid process</h3>
-    <p>{{ result.process_cooling_kwh }} kWh/an</p>
-  </div>
-
-  <div class="kpi important">
-    <h3>Total chaud</h3>
-    <p>{{ result.total_heating_kwh }} kWh/an</p>
-  </div>
-
-  <div class="kpi important">
-    <h3>Total froid</h3>
-    <p>{{ result.total_cooling_kwh }} kWh/an</p>
-  </div>
-
-  <div class="kpi important">
-    <h3>Énergie totale</h3>
-    <p>{{ result.total_energy_kwh }} kWh/an</p>
-  </div>
-
-  <div class="kpi important">
-    <h3>Coût annuel</h3>
-    <p>{{ result.annual_cost_chf }} CHF/an</p>
-  </div>
-
-  <div class="kpi important">
-    <h3>Émissions CO₂</h3>
-    <p>{{ result.annual_co2_tons }} tCO₂/an</p>
-  </div>
+  <div class="kpi"><h3>Besoins chaud enveloppe</h3><p>{{ result.heating_kwh }} kWh/an</p></div>
+  <div class="kpi"><h3>Besoins froid enveloppe</h3><p>{{ result.cooling_kwh }} kWh/an</p></div>
+  <div class="kpi"><h3>Chaud process</h3><p>{{ result.process_heating_kwh }} kWh/an</p></div>
+  <div class="kpi"><h3>Froid process</h3><p>{{ result.process_cooling_kwh }} kWh/an</p></div>
+  <div class="kpi important"><h3>Total chaud</h3><p>{{ result.total_heating_kwh }} kWh/an</p></div>
+  <div class="kpi important"><h3>Total froid</h3><p>{{ result.total_cooling_kwh }} kWh/an</p></div>
+  <div class="kpi important"><h3>Énergie totale</h3><p>{{ result.total_energy_kwh }} kWh/an</p></div>
+  <div class="kpi important"><h3>Coût annuel</h3><p>{{ result.annual_cost_chf }} CHF/an</p></div>
+  <div class="kpi important"><h3>Émissions CO₂</h3><p>{{ result.annual_co2_tons }} tCO₂/an</p></div>
 </div>
 
 <h3>Résultats mensuels</h3>
@@ -75,75 +39,6 @@
       <th>Besoins froid [kWh]</th>
     </tr>
   </thead>
-
-  <h3>Bilan annuel par paroi</h3>
-
-  <table>
-    <thead>
-      <tr>
-        <th>Paroi</th>
-        <th>Orientation</th>
-        <th>Matériau</th>
-        <th>Chaud [kWh/an]</th>
-        <th>Froid [kWh/an]</th>
-        <th>Total [kWh/an]</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for wall in result.wall_results %}
-      <tr>
-        <td>{{ wall.wall_name }}</td>
-        <td>{{ wall.orientation }}</td>
-        <td>{{ wall.material }}</td>
-        <td>{{ wall.heating_kwh }}</td>
-        <td>{{ wall.cooling_kwh }}</td>
-        <td>{{ wall.total_kwh }}</td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
-
-  <h3>Graphique par paroi</h3>
-
-  <canvas id="wallChart" height="120"></canvas>
-
-  <script>
-  const wallLabels = [
-    {% for wall in result.wall_results %}
-      "{{ wall.wall_name }}"{% if not loop.last %},{% endif %}
-    {% endfor %}
-  ];
-
-  const wallHeating = [
-    {% for wall in result.wall_results %}
-      {{ wall.heating_kwh }}{% if not loop.last %},{% endif %}
-    {% endfor %}
-  ];
-
-  const wallCooling = [
-    {% for wall in result.wall_results %}
-      {{ wall.cooling_kwh }}{% if not loop.last %},{% endif %}
-    {% endfor %}
-  ];
-
-  new Chart(document.getElementById('wallChart'), {
-    type: 'bar',
-    data: {
-      labels: wallLabels,
-      datasets: [
-        {
-          label: 'Chaud [kWh/an]',
-          data: wallHeating
-        },
-        {
-          label: 'Froid [kWh/an]',
-          data: wallCooling
-        }
-      ]
-    }
-  });
-  </script>
-
   <tbody>
     {% for month in result.monthly_results %}
     <tr>
@@ -158,87 +53,62 @@
 </table>
 
 <h3>Graphique mensuel</h3>
-
 <canvas id="energyChart" height="120"></canvas>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<h3>Bilan annuel par paroi</h3>
 
-<script>
-  const monthlyData = [
-    {% for month in result.monthly_results %}
-    {
-      month: "{{ month.month }}",
-      outdoor_temp_c: {{ month.outdoor_temp_c }},
-      effective_temp_c: {{ month.effective_temp_c }},
-      heating_kwh: {{ month.heating_kwh }},
-      cooling_kwh: {{ month.cooling_kwh }}
-    }{% if not loop.last %},{% endif %}
+<table>
+  <thead>
+    <tr>
+      <th>Paroi</th>
+      <th>Orientation</th>
+      <th>Matériau</th>
+      <th>Chaud [kWh/an]</th>
+      <th>Froid [kWh/an]</th>
+      <th>Total [kWh/an]</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for wall in result.wall_results %}
+    <tr>
+      <td>{{ wall.wall_name }}</td>
+      <td>{{ wall.orientation }}</td>
+      <td>{{ wall.material }}</td>
+      <td>{{ wall.heating_kwh }}</td>
+      <td>{{ wall.cooling_kwh }}</td>
+      <td>{{ wall.total_kwh }}</td>
+    </tr>
     {% endfor %}
-  ];
+  </tbody>
+</table>
 
-  const labels = monthlyData.map(x => x.month);
-  const heating = monthlyData.map(x => x.heating_kwh);
-  const cooling = monthlyData.map(x => x.cooling_kwh);
-  const outdoorTemp = monthlyData.map(x => x.outdoor_temp_c);
-  const effectiveTemp = monthlyData.map(x => x.effective_temp_c);
+<h3>Graphique par paroi</h3>
+<canvas id="wallChart" height="120"></canvas>
 
-  new Chart(document.getElementById('energyChart'), {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Chauffage [kWh]',
-          data: heating,
-          yAxisID: 'y'
-        },
-        {
-          label: 'Refroidissement [kWh]',
-          data: cooling,
-          yAxisID: 'y'
-        },
-        {
-          label: 'Température extérieure [°C]',
-          data: outdoorTemp,
-          yAxisID: 'y1'
-        },
-        {
-          label: 'Température effective [°C]',
-          data: effectiveTemp,
-          yAxisID: 'y1'
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      interaction: {
-        mode: 'index',
-        intersect: false
-      },
-      scales: {
-        y: {
-          type: 'linear',
-          position: 'left',
-          title: {
-            display: true,
-            text: 'Énergie [kWh]'
-          }
-        },
-        y1: {
-          type: 'linear',
-          position: 'right',
-          title: {
-            display: true,
-            text: 'Température [°C]'
-          },
-          grid: {
-            drawOnChartArea: false
-          }
-        }
-      }
-    }
-  });
-</script>
+<h3>Recommandations automatiques</h3>
+
+{% set sorted_walls = result.wall_results|sort(attribute="total_kwh", reverse=True) %}
+
+{% if sorted_walls %}
+<p>Les parois les plus impactantes sur les besoins thermiques sont :</p>
+
+<ol>
+  {% for wall in sorted_walls[:3] %}
+  <li>
+    <strong>{{ wall.wall_name }}</strong> — {{ wall.total_kwh }} kWh/an
+    {% if wall.wall_name == "Toiture" %}
+      : vérifier l’isolation de toiture.
+    {% elif wall.wall_name == "Sol" %}
+      : analyser le contact avec le terrain et l’isolation du sol.
+    {% else %}
+      : envisager une amélioration de l’isolation de cette paroi.
+    {% endif %}
+  </li>
+  {% endfor %}
+</ol>
+{% else %}
+<p>Aucune recommandation disponible.</p>
+{% endif %}
 
 <h3>Hypothèses actuelles</h3>
 
@@ -246,7 +116,7 @@
   <li>Calcul mensuel basé sur la source météo indiquée ci-dessus.</li>
   <li>Si la météo dynamique est activée et que les coordonnées GPS sont disponibles, les températures proviennent d’Open-Meteo historique.</li>
   <li>Si la météo dynamique n’est pas disponible, la région climatique de secours est utilisée.</li>
-  <li>Température effective = pondération entre température extérieure et température du sol selon le facteur d’enterrement.</li>
+  <li>Température effective = température extérieure, température sol ou mix des deux selon le type de paroi et le facteur d’enterrement.</li>
   <li>Formule enveloppe : Q = U × A × ΔT × heures.</li>
   <li>Les besoins process chaud/froid sont répartis uniquement sur les mois sélectionnés pour chaque zone.</li>
   <li>Les besoins affichés mensuellement incluent enveloppe + process.</li>
@@ -258,4 +128,70 @@
 </ul>
 
 <a href="/caves/{{ cave.id }}">Retour à la cave</a>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const monthlyData = [
+  {% for month in result.monthly_results %}
+  {
+    month: "{{ month.month }}",
+    outdoor_temp_c: {{ month.outdoor_temp_c }},
+    effective_temp_c: {{ month.effective_temp_c }},
+    heating_kwh: {{ month.heating_kwh }},
+    cooling_kwh: {{ month.cooling_kwh }}
+  }{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+new Chart(document.getElementById('energyChart'), {
+  type: 'line',
+  data: {
+    labels: monthlyData.map(x => x.month),
+    datasets: [
+      { label: 'Chauffage [kWh]', data: monthlyData.map(x => x.heating_kwh), yAxisID: 'y' },
+      { label: 'Refroidissement [kWh]', data: monthlyData.map(x => x.cooling_kwh), yAxisID: 'y' },
+      { label: 'Température extérieure [°C]', data: monthlyData.map(x => x.outdoor_temp_c), yAxisID: 'y1' },
+      { label: 'Température effective [°C]', data: monthlyData.map(x => x.effective_temp_c), yAxisID: 'y1' }
+    ]
+  },
+  options: {
+    responsive: true,
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      y: { type: 'linear', position: 'left', title: { display: true, text: 'Énergie [kWh]' } },
+      y1: { type: 'linear', position: 'right', title: { display: true, text: 'Température [°C]' }, grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+const wallLabels = [
+  {% for wall in result.wall_results %}
+    "{{ wall.wall_name }}"{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+const wallHeating = [
+  {% for wall in result.wall_results %}
+    {{ wall.heating_kwh }}{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+const wallCooling = [
+  {% for wall in result.wall_results %}
+    {{ wall.cooling_kwh }}{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+new Chart(document.getElementById('wallChart'), {
+  type: 'bar',
+  data: {
+    labels: wallLabels,
+    datasets: [
+      { label: 'Chaud [kWh/an]', data: wallHeating },
+      { label: 'Froid [kWh/an]', data: wallCooling }
+    ]
+  }
+});
+</script>
 {% endblock %}
