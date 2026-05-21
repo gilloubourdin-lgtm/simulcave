@@ -8,3 +8,4 @@ weasyprint
 passlib
 itsdangerous
 requests
+openpyxl

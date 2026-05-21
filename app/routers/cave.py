@@ -2,6 +2,8 @@
 
 import csv
 import io
+from openpyxl import Workbook
+from openpyxl.styles import Font
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import RedirectResponse, Response
@@ -720,6 +722,136 @@ def export_cave_csv(
         media_type="text/csv; charset=utf-8",
         headers={
             "Content-Disposition": f'attachment; filename="simulcave_{cave.id}.csv"'
+        },
+    )
+
+@router.get("/caves/{cave_id}/export/xlsx")
+def export_cave_xlsx(
+    cave_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+    result = simulate_cave(cave)
+
+    wb = Workbook()
+
+    ws = wb.active
+    ws.title = "Synthèse"
+
+    rows = [
+        ["Cave", cave.name],
+        ["Région", cave.region],
+        ["Adresse", cave.address or ""],
+        ["Latitude", cave.latitude or ""],
+        ["Longitude", cave.longitude or ""],
+        ["Source météo", result.weather_source],
+        ["Température sol [°C]", result.soil_temperature_c],
+        ["Énergie totale [kWh/an]", result.total_energy_kwh],
+        ["Coût annuel [CHF/an]", result.annual_cost_chf],
+        ["CO₂ [t/an]", result.annual_co2_tons],
+    ]
+
+    for row in rows:
+        ws.append(row)
+
+    ws["A1"].font = Font(bold=True)
+
+    ws_month = wb.create_sheet("Mensuel")
+    ws_month.append([
+        "Mois",
+        "Température extérieure [°C]",
+        "Température effective [°C]",
+        "Chaud [kWh]",
+        "Froid [kWh]",
+    ])
+
+    for month in result.monthly_results:
+        ws_month.append([
+            month.month,
+            month.outdoor_temp_c,
+            month.effective_temp_c,
+            month.heating_kwh,
+            month.cooling_kwh,
+        ])
+
+    ws_walls = wb.create_sheet("Parois")
+    ws_walls.append([
+        "Paroi",
+        "Orientation",
+        "Matériau",
+        "Surface [m²]",
+        "U [W/m²K]",
+        "Épaisseur [m]",
+        "Inertie",
+        "Chaud [kWh/an]",
+        "Froid [kWh/an]",
+        "Total [kWh/an]",
+    ])
+
+    wall_results_by_name = {
+        wall.wall_name: wall for wall in result.wall_results
+    }
+
+    for wall in cave.walls:
+        wall_result = wall_results_by_name.get(wall.name)
+
+        ws_walls.append([
+            wall.name,
+            wall.orientation,
+            wall.material,
+            wall.area_m2,
+            wall.u_value,
+            wall.thickness_m,
+            wall.inertia_factor,
+            wall_result.heating_kwh if wall_result else "",
+            wall_result.cooling_kwh if wall_result else "",
+            wall_result.total_kwh if wall_result else "",
+        ])
+
+    ws_zones = wb.create_sheet("Zones")
+    ws_zones.append([
+        "Zone",
+        "Volume [m³]",
+        "X [m]",
+        "Y [m]",
+        "Longueur [m]",
+        "Largeur [m]",
+        "Temp. hiver [°C]",
+        "Temp. été [°C]",
+        "Humidité [%]",
+        "Chaud process [kWh/an]",
+        "Période chaud",
+        "Froid process [kWh/an]",
+        "Période froid",
+    ])
+
+    for zone in cave.zones:
+        ws_zones.append([
+            zone.name,
+            zone.volume_m3,
+            zone.x_m,
+            zone.y_m,
+            zone.length_m,
+            zone.width_m,
+            zone.target_temp_winter_c,
+            zone.target_temp_summer_c,
+            zone.target_humidity_percent,
+            zone.process_heating_kwh,
+            f"{zone.process_heating_start_month}-{zone.process_heating_end_month}",
+            zone.process_cooling_kwh,
+            f"{zone.process_cooling_start_month}-{zone.process_cooling_end_month}",
+        ])
+
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+
+    return Response(
+        content=output.getvalue(),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={
+            "Content-Disposition": f'attachment; filename="simulcave_{cave.id}.xlsx"'
         },
     )
 
