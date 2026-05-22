@@ -297,3 +297,9 @@ canvas {
   width: auto;
   margin: 0;
 }
+
+.help-text {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 0.3rem;
+}

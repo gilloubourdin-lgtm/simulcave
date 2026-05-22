@@ -51,11 +51,20 @@
         </label>
 
         <label>Renouvellement d’air [vol/h]</label>
-        <input type="number"
-            step="0.01"
-            min="0"
-            name="ventilation_rate_ach"
-            value="{{ cave.ventilation_rate_ach or 0.2 }}">
+            <input type="number"
+                   step="0.01"
+                   min="0"
+                   name="ventilation_rate_ach"
+                   value="{{ cave.ventilation_rate_ach or 0.2 }}"
+                   {% if not cave.ventilation_enabled %}disabled{% endif %}
+                   id="ventilation_rate_ach">
+
+            <p class="help-text">
+            0.05 = cave très étanche<br>
+            0.10 = cave enterrée classique<br>
+            0.20 = cave standard<br>
+            0.50+ = ventilation mécanique importante
+            </p>
     </section>
 
     <button type="submit">
@@ -63,5 +72,24 @@
     </button>
 
 </form>
+<script>
+const ventilationCheckbox = document.querySelector(
+    'input[name="ventilation_enabled"]'
+);
 
+const ventilationInput = document.getElementById(
+    "ventilation_rate_ach"
+);
+
+function updateVentilationField() {
+    ventilationInput.disabled = !ventilationCheckbox.checked;
+}
+
+ventilationCheckbox.addEventListener(
+    "change",
+    updateVentilationField
+);
+
+updateVentilationField();
+</script>
 {% endblock %}
