@@ -338,22 +338,19 @@ def edit_cave_submit(
     cave_id: int,
     name: str = Form(...),
     region: str = Form(...),
-    electricity_cost: float = Form(...),
-    heating_cost: float = Form(...),
-    co2_factor_electricity: float = Form(...),
+    energy_price_chf_per_kwh: float = Form(...),
+    co2_factor_kg_per_kwh: float = Form(...),
+    ventilation_rate_ach: float = Form(0.10),
+    ventilation_enabled: str | None = Form(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
-    ventilation_rate_ach: float = Form(0.2),
-    ventilation_enabled: str | None = Form(None),
 ):
     cave = get_user_cave(db, cave_id, current_user)
 
     cave.name = name
     cave.region = region
-    cave.electricity_cost = electricity_cost
-    cave.heating_cost = heating_cost
-    cave.co2_factor_electricity = co2_factor_electricity
-
+    cave.energy_price_chf_per_kwh = energy_price_chf_per_kwh
+    cave.co2_factor_kg_per_kwh = co2_factor_kg_per_kwh
     cave.ventilation_rate_ach = ventilation_rate_ach
     cave.ventilation_enabled = ventilation_enabled == "on"
 

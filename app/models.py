@@ -40,14 +40,6 @@ class Cave(Base):
     ventilation_rate_ach = Column(Float, default=0.2)
     ventilation_enabled = Column(Boolean, default=True)
 
-    electricity_cost = Column(Float, default=0.31)
-    heating_cost = Column(Float, default=0.20)
-
-    co2_factor_electricity = Column(Float, default=0.003)
-
-    ventilation_rate_ach = Column(Float, default=0.10)
-    ventilation_enabled = Column(Boolean, default=True)
-
     walls = relationship(
         "Wall",
         back_populates="cave",

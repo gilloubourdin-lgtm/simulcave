@@ -18,25 +18,18 @@
            value="{{ cave.region }}"
            required>
 
-    <label>Coût électricité [CHF/kWh]</label>
+    <label>Coût énergie [CHF/kWh]</label>
     <input type="number"
            step="0.01"
-           name="electricity_cost"
-           value="{{ cave.electricity_cost or 0.31 }}"
+           name="energy_price_chf_per_kwh"
+           value="{{ cave.energy_price_chf_per_kwh or 0.31 }}"
            required>
 
-    <label>Coût chauffage [CHF/kWh]</label>
-    <input type="number"
-           step="0.01"
-           name="heating_cost"
-           value="{{ cave.heating_cost or 0.20 }}"
-           required>
-
-    <label>Facteur CO₂ électricité [kgCO₂/kWh]</label>
+    <label>Facteur CO₂ énergie [kgCO₂/kWh]</label>
     <input type="number"
            step="0.001"
-           name="co2_factor_electricity"
-           value="{{ cave.co2_factor_electricity or 0.003 }}"
+           name="co2_factor_kg_per_kwh"
+           value="{{ cave.co2_factor_kg_per_kwh or 0.003 }}"
            required>
 
     <section>
@@ -44,27 +37,27 @@
 
         <label class="checkbox-label">
             <input type="checkbox"
-                class="checkbox-input"
-                name="ventilation_enabled"
-                {% if cave.ventilation_enabled %}checked{% endif %}>
+                   class="checkbox-input"
+                   name="ventilation_enabled"
+                   {% if cave.ventilation_enabled %}checked{% endif %}>
             Activer le renouvellement d’air
         </label>
 
         <label>Renouvellement d’air [vol/h]</label>
-            <input type="number"
-                   step="0.01"
-                   min="0"
-                   name="ventilation_rate_ach"
-                   value="{{ cave.ventilation_rate_ach or 0.10 }}"
-                   {% if not cave.ventilation_enabled %}disabled{% endif %}
-                   id="ventilation_rate_ach">
+        <input type="number"
+               step="0.01"
+               min="0"
+               name="ventilation_rate_ach"
+               value="{{ cave.ventilation_rate_ach or 0.10 }}"
+               {% if not cave.ventilation_enabled %}disabled{% endif %}
+               id="ventilation_rate_ach">
 
-            <p class="help-text">
+        <p class="help-text">
             0.05 = cave très étanche<br>
             0.10 = cave enterrée classique<br>
             0.20 = cave standard<br>
             0.50+ = ventilation mécanique importante
-            </p>
+        </p>
     </section>
 
     <button type="submit">
@@ -72,6 +65,7 @@
     </button>
 
 </form>
+
 <script>
 const ventilationCheckbox = document.querySelector(
     'input[name="ventilation_enabled"]'
@@ -92,4 +86,5 @@ ventilationCheckbox.addEventListener(
 
 updateVentilationField();
 </script>
+
 {% endblock %}
