@@ -48,6 +48,8 @@
       <th>Besoins froid [kWh]</th>
       <th>Ventilation chaud [kWh]</th>
       <th>Ventilation froid [kWh]</th>
+      <th>Point de rosée [°C]</th>
+      <th>Risque condensation</th>
     </tr>
   </thead>
   <tbody>
@@ -60,6 +62,16 @@
       <td>{{ month.cooling_kwh }}</td>
       <td>{{ month.ventilation_heating_kwh }}</td>
       <td>{{ month.ventilation_cooling_kwh }}</td>
+      <td>{{ month.dew_point_c }}</td>
+      <td>
+          {% if month.condensation_risk == "élevé" %}
+              <strong style="color:#a32626;">Élevé</strong>
+          {% elif month.condensation_risk == "moyen" %}
+              <strong style="color:#b36b00;">Moyen</strong>
+          {% else %}
+              <span style="color:#2f6b3f;">Faible</span>
+          {% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>

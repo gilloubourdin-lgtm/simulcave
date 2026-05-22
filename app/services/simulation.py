@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-
+import math
 from app.services.weather import MONTHS, HOURS_PER_MONTH, get_weather_for_cave
 
 
@@ -12,6 +12,8 @@ class MonthlyResult:
     cooling_kwh: float
     ventilation_heating_kwh: float
     ventilation_cooling_kwh: float
+    dew_point_c: float
+    condensation_risk: str
 
 
 @dataclass
@@ -106,6 +108,32 @@ def wall_external_temperature(
 
     return outdoor_temp * (1 - buried_factor) + soil_temp * buried_factor
 
+def dew_point_c(temperature_c: float, relative_humidity_pct: float) -> float:
+    """
+    Calcule le point de rosée en °C avec la formule de Magnus.
+    """
+    rh = max(1, min(relative_humidity_pct, 100)) / 100
+    a = 17.62
+    b = 243.12
+
+    gamma = (a * temperature_c / (b + temperature_c)) + math.log(rh)
+    return (b * gamma) / (a - gamma)
+
+
+def condensation_risk_level(
+    surface_temp_c: float,
+    dew_point_temp_c: float,
+) -> str:
+    """
+    Évalue le risque de condensation.
+    """
+    margin = surface_temp_c - dew_point_temp_c
+
+    if margin <= 0:
+        return "élevé"
+    if margin <= 2:
+        return "moyen"
+    return "faible"
 
 def simulate_cave(cave) -> SimulationResult:
     weather = get_weather_for_cave(cave)
@@ -268,6 +296,27 @@ def simulate_cave(cave) -> SimulationResult:
         else:
             effective_temp = outdoor_temp
 
+        humidity_values = [
+            getattr(zone, "target_humidity_pct", 75) or 75
+            for zone in cave.zones
+        ]
+
+        avg_humidity = (
+            sum(humidity_values) / len(humidity_values)
+            if humidity_values
+            else 75
+        )
+
+        dew_point = dew_point_c(
+            temperature_c=effective_temp,
+            relative_humidity_pct=avg_humidity,
+        )
+
+        condensation_risk = condensation_risk_level(
+            surface_temp_c=effective_temp,
+            dew_point_temp_c=dew_point,
+        )
+
         monthly_results.append(
             MonthlyResult(
                 month=MONTHS[month_index],
@@ -277,6 +326,8 @@ def simulate_cave(cave) -> SimulationResult:
                 cooling_kwh=round(month_total_cooling, 1),
                 ventilation_heating_kwh=round(month_ventilation_heating, 1),
                 ventilation_cooling_kwh=round(month_ventilation_cooling, 1),
+                dew_point_c=round(dew_point, 1),
+                condensation_risk=condensation_risk,
             )
         )
 
