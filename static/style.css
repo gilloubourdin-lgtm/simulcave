@@ -1,12 +1,26 @@
+:root {
+  --color-header: #3b1f2b;
+  --color-primary: #6b2b3d;
+  --color-primary-dark: #4d1f2d;
+  --color-danger: #a32626;
+  --color-danger-dark: #7d1c1c;
+  --color-border: #ddd;
+  --color-bg: #f6f6f6;
+  --color-bg-light: #fafafa;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+}
+
 body {
   font-family: Arial, sans-serif;
   margin: 0;
-  background: #f6f6f6;
+  background: var(--color-bg);
   color: #222;
 }
 
 header {
-  background: #3b1f2b;
+  background: var(--color-header);
   color: white;
   padding: 1rem 2rem;
 }
@@ -26,7 +40,7 @@ main {
   margin: 2rem auto;
   background: white;
   padding: 2rem;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 form {
@@ -36,8 +50,8 @@ form {
 section {
   margin-bottom: 2rem;
   padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
 }
 
 label {
@@ -54,21 +68,30 @@ select {
 }
 
 button,
-.button {
+.button,
+.action-btn {
   display: inline-block;
   margin-top: 1rem;
-  padding: 0.6rem 1rem;
-  background: #6b2d3f;
-  color: white;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius-md);
   border: none;
-  border-radius: 4px;
   text-decoration: none;
   cursor: pointer;
+  font-size: 0.95rem;
+  transition: 0.2s;
+}
+
+button,
+.button,
+.action-primary {
+  background: var(--color-primary);
+  color: white;
 }
 
 button:hover,
-.button:hover {
-  background: #4d1f2d;
+.button:hover,
+.action-primary:hover {
+  background: var(--color-primary-dark);
 }
 
 table {
@@ -79,16 +102,16 @@ table {
 
 th,
 td {
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid var(--color-border);
   padding: 0.75rem;
   text-align: left;
 }
 
 .zone-card {
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-border);
   padding: 1rem;
-  border-radius: 6px;
-  background: #fafafa;
+  border-radius: var(--radius-md);
+  background: var(--color-bg-light);
 }
 
 .kpi-grid {
@@ -101,7 +124,7 @@ td {
 .kpi {
   background: #f4f4f4;
   padding: 1rem;
-  border-radius: 6px;
+  border-radius: var(--radius-md);
 }
 
 .kpi h3 {
@@ -120,10 +143,10 @@ td {
 canvas {
   margin: 2rem 0;
   max-width: 100%;
-  background: #fff;
+  background: white;
   padding: 1rem;
   border: 1px solid #eee;
-  border-radius: 8px;
+  border-radius: var(--radius-lg);
 }
 
 .plan-wrapper {
@@ -141,8 +164,8 @@ canvas {
   width: 100%;
   max-height: 750px;
   overflow: auto;
-  border: 1px solid #ddd;
-  background: #fafafa;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-light);
   padding: 1rem;
 }
 
@@ -153,7 +176,7 @@ canvas {
 .plan-axis-label {
   font-size: 24px;
   font-weight: bold;
-  fill: #3b1f2b;
+  fill: var(--color-header);
 }
 
 .plan-zone-title {
@@ -170,7 +193,7 @@ canvas {
 .site-footer {
   margin-top: 60px;
   padding: 25px 10px;
-  border-top: 1px solid #ddd;
+  border-top: 1px solid var(--color-border);
   text-align: center;
 }
 
@@ -187,9 +210,9 @@ canvas {
 
 .action-panel {
   margin: 2rem 0;
-  background: #fafafa;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  background: var(--color-bg-light);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
   padding: 1rem;
 }
 
@@ -203,18 +226,62 @@ canvas {
 
 .action-group h4 {
   margin-bottom: 0.5rem;
-  color: #3b1f2b;
+  color: var(--color-header);
 }
 
-.btn-danger {
-    background: #a32626;
-    color: white;
-    border: none;
-    padding: 0.4rem 0.8rem;
-    border-radius: 4px;
-    cursor: pointer;
+.actions-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
 }
 
-.btn-danger:hover {
-    background: #7d1c1c;
+.action-btn {
+  margin-top: 0;
+  background: white;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.action-btn:hover {
+  background: #f4e8ec;
+}
+
+.action-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.action-danger {
+  background: var(--color-danger);
+  border-color: var(--color-danger);
+  color: white;
+}
+
+.action-danger:hover {
+  background: var(--color-danger-dark);
+}
+
+.action-form {
+  display: inline;
+  margin: 0;
+}
+
+@media (max-width: 900px) {
+  main {
+    padding: 1rem;
+  }
+
+  table {
+    font-size: 0.9rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .actions-cell {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
