@@ -311,6 +311,56 @@ def create_cave(
         status_code=303,
     )
 
+@router.get("/caves/{cave_id}/edit")
+def edit_cave_form(
+    request: Request,
+    cave_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="cave_edit.html",
+        context={
+            "cave": cave,
+        },
+    )
+
+
+@router.post("/caves/{cave_id}/edit")
+def edit_cave_submit(
+    request: Request,
+    cave_id: int,
+    name: str = Form(...),
+    region: str = Form(...),
+    electricity_cost: float = Form(...),
+    heating_cost: float = Form(...),
+    co2_factor_electricity: float = Form(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+    ventilation_rate_ach: float = Form(0.2),
+    ventilation_enabled: str | None = Form(None),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+
+    cave.name = name
+    cave.region = region
+    cave.electricity_cost = electricity_cost
+    cave.heating_cost = heating_cost
+    cave.co2_factor_electricity = co2_factor_electricity
+
+    cave.ventilation_rate_ach = ventilation_rate_ach
+    cave.ventilation_enabled = ventilation_enabled == "on"
+
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/caves/{cave.id}",
+        status_code=303,
+    )
+
 @router.get("/caves/compare")
 def compare_caves(
     request: Request,

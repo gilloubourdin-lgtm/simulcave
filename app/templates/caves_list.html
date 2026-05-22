@@ -57,16 +57,37 @@
       <td>{{ result.annual_co2_tons }}</td>
 
       <td class="actions-cell">
-          <a class="action-btn action-primary" href="/caves/{{ cave.id }}">Ouvrir</a>
-          <a class="action-btn" href="/caves/{{ cave.id }}/simulate">Simulation</a>
-          <a class="action-btn" href="/caves/{{ cave.id }}/plan">Plan</a>
-          <a class="action-btn" href="/caves/{{ cave.id }}/report/pdf">PDF</a>
+          <a class="action-btn action-primary"
+            href="/caves/{{ cave.id }}">
+            Ouvrir
+          </a>
+
+          <a class="action-btn"
+            href="/caves/{{ cave.id }}/edit">
+            Modifier
+          </a>
+
+          <a class="action-btn"
+            href="/caves/{{ cave.id }}/simulate">
+            Simulation
+          </a>
+
+          <a class="action-btn"
+            href="/caves/{{ cave.id }}/plan">
+            Plan
+          </a>
+
+          <a class="action-btn"
+            href="/caves/{{ cave.id }}/report/pdf">
+            PDF
+          </a>
 
           <form method="post"
                 action="/caves/{{ cave.id }}/delete"
                 onsubmit="return confirm('Supprimer cette cave ?');"
                 class="action-form">
-              <button type="submit" class="action-btn action-danger">
+              <button type="submit"
+                      class="action-btn action-danger">
                   Supprimer
               </button>
           </form>

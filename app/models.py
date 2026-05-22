@@ -37,6 +37,9 @@ class Cave(Base):
 
     buried_factor = Column(Float, default=1.0)
 
+    ventilation_rate_ach = Column(Float, default=0.2)
+    ventilation_enabled = Column(Boolean, default=True)
+
     walls = relationship(
         "Wall",
         back_populates="cave",

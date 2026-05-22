@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Modifier la cave</h2>
+
+<form method="post">
+
+    <label>Nom de la cave</label>
+    <input type="text"
+           name="name"
+           value="{{ cave.name }}"
+           required>
+
+    <label>Région</label>
+    <input type="text"
+           name="region"
+           value="{{ cave.region }}"
+           required>
+
+    <label>Coût électricité [CHF/kWh]</label>
+    <input type="number"
+           step="0.01"
+           name="electricity_cost"
+           value="{{ cave.electricity_cost }}"
+           required>
+
+    <label>Coût chauffage [CHF/kWh]</label>
+    <input type="number"
+           step="0.01"
+           name="heating_cost"
+           value="{{ cave.heating_cost }}"
+           required>
+
+    <label>Facteur CO₂ électricité [kgCO₂/kWh]</label>
+    <input type="number"
+           step="0.001"
+           name="co2_factor_electricity"
+           value="{{ cave.co2_factor_electricity }}"
+           required>
+
+    <section>
+        <h3>Ventilation / renouvellement d’air</h3>
+
+        <label class="checkbox-label">
+            <input type="checkbox"
+                class="checkbox-input"
+                name="ventilation_enabled"
+                {% if cave.ventilation_enabled %}checked{% endif %}>
+            Activer le renouvellement d’air
+        </label>
+
+        <label>Renouvellement d’air [vol/h]</label>
+        <input type="number"
+            step="0.01"
+            min="0"
+            name="ventilation_rate_ach"
+            value="{{ cave.ventilation_rate_ach or 0.2 }}">
+    </section>
+
+    <button type="submit">
+        Enregistrer les modifications
+    </button>
+
+</form>
+
+{% endblock %}

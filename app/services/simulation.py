@@ -1,5 +1,3 @@
-# app/services/simulation.py
-
 from dataclasses import dataclass
 
 from app.services.weather import MONTHS, HOURS_PER_MONTH, get_weather_for_cave
@@ -12,6 +10,9 @@ class MonthlyResult:
     effective_temp_c: float
     heating_kwh: float
     cooling_kwh: float
+    ventilation_heating_kwh: float
+    ventilation_cooling_kwh: float
+
 
 @dataclass
 class WallResult:
@@ -31,6 +32,8 @@ class SimulationResult:
     cooling_kwh: float
     process_heating_kwh: float
     process_cooling_kwh: float
+    ventilation_heating_kwh: float
+    ventilation_cooling_kwh: float
 
     total_heating_kwh: float
     total_cooling_kwh: float
@@ -61,6 +64,18 @@ def calculate_transmission_kwh(
     return wh / 1000
 
 
+def calculate_ventilation_load_kwh(
+    volume_m3: float,
+    air_changes_per_hour: float,
+    indoor_temp_c: float,
+    outdoor_temp_c: float,
+    hours: float,
+) -> float:
+    delta_t = abs(indoor_temp_c - outdoor_temp_c)
+    airflow_m3_h = volume_m3 * air_changes_per_hour
+    return 0.34 * airflow_m3_h * delta_t * hours / 1000
+
+
 def month_is_active(month_number: int, start_month: int, end_month: int) -> bool:
     if start_month <= end_month:
         return start_month <= month_number <= end_month
@@ -89,10 +104,7 @@ def wall_external_temperature(
     if wall.name == "Sol" or wall.orientation == "B":
         return soil_temp
 
-    return (
-        outdoor_temp * (1 - buried_factor)
-        + soil_temp * buried_factor
-    )
+    return outdoor_temp * (1 - buried_factor) + soil_temp * buried_factor
 
 
 def simulate_cave(cave) -> SimulationResult:
@@ -109,6 +121,8 @@ def simulate_cave(cave) -> SimulationResult:
     total_envelope_cooling = 0
     total_process_heating = 0
     total_process_cooling = 0
+    total_ventilation_heating = 0
+    total_ventilation_cooling = 0
 
     total_volume = cave_volume(cave)
 
@@ -129,6 +143,8 @@ def simulate_cave(cave) -> SimulationResult:
         month_envelope_cooling = 0
         month_process_heating = 0
         month_process_cooling = 0
+        month_ventilation_heating = 0
+        month_ventilation_cooling = 0
 
         effective_temperatures = []
 
@@ -163,6 +179,28 @@ def simulate_cave(cave) -> SimulationResult:
 
             target_heating = zone.target_temp_winter_c
             target_cooling = zone.target_temp_summer_c
+
+            if getattr(cave, "ventilation_enabled", True):
+                zone_volume = zone.volume_m3 or (total_volume * zone_ratio)
+                ach = getattr(cave, "ventilation_rate_ach", 0.2) or 0.2
+
+                if outdoor_temp < target_heating:
+                    month_ventilation_heating += calculate_ventilation_load_kwh(
+                        volume_m3=zone_volume,
+                        air_changes_per_hour=ach,
+                        indoor_temp_c=target_heating,
+                        outdoor_temp_c=outdoor_temp,
+                        hours=hours,
+                    )
+
+                elif outdoor_temp > target_cooling:
+                    month_ventilation_cooling += calculate_ventilation_load_kwh(
+                        volume_m3=zone_volume,
+                        air_changes_per_hour=ach,
+                        indoor_temp_c=target_cooling,
+                        outdoor_temp_c=outdoor_temp,
+                        hours=hours,
+                    )
 
             for wall in cave.walls:
                 wall_temp = wall_external_temperature(
@@ -206,13 +244,24 @@ def simulate_cave(cave) -> SimulationResult:
                 wall_totals[wall.id]["heating"] += wall_heating
                 wall_totals[wall.id]["cooling"] += wall_cooling
 
-        month_total_heating = month_envelope_heating + month_process_heating
-        month_total_cooling = month_envelope_cooling + month_process_cooling
+        month_total_heating = (
+            month_envelope_heating
+            + month_process_heating
+            + month_ventilation_heating
+        )
+
+        month_total_cooling = (
+            month_envelope_cooling
+            + month_process_cooling
+            + month_ventilation_cooling
+        )
 
         total_envelope_heating += month_envelope_heating
         total_envelope_cooling += month_envelope_cooling
         total_process_heating += month_process_heating
         total_process_cooling += month_process_cooling
+        total_ventilation_heating += month_ventilation_heating
+        total_ventilation_cooling += month_ventilation_cooling
 
         if effective_temperatures:
             effective_temp = sum(effective_temperatures) / len(effective_temperatures)
@@ -226,11 +275,23 @@ def simulate_cave(cave) -> SimulationResult:
                 effective_temp_c=round(effective_temp, 1),
                 heating_kwh=round(month_total_heating, 1),
                 cooling_kwh=round(month_total_cooling, 1),
+                ventilation_heating_kwh=round(month_ventilation_heating, 1),
+                ventilation_cooling_kwh=round(month_ventilation_cooling, 1),
             )
         )
 
-    total_heating = total_envelope_heating + total_process_heating
-    total_cooling = total_envelope_cooling + total_process_cooling
+    total_heating = (
+        total_envelope_heating
+        + total_process_heating
+        + total_ventilation_heating
+    )
+
+    total_cooling = (
+        total_envelope_cooling
+        + total_process_cooling
+        + total_ventilation_cooling
+    )
+
     total_energy = total_heating + total_cooling
 
     annual_cost = total_energy * cave.energy_price_chf_per_kwh
@@ -261,6 +322,8 @@ def simulate_cave(cave) -> SimulationResult:
         cooling_kwh=round(total_envelope_cooling, 1),
         process_heating_kwh=round(total_process_heating, 1),
         process_cooling_kwh=round(total_process_cooling, 1),
+        ventilation_heating_kwh=round(total_ventilation_heating, 1),
+        ventilation_cooling_kwh=round(total_ventilation_cooling, 1),
         total_heating_kwh=round(total_heating, 1),
         total_cooling_kwh=round(total_cooling, 1),
         total_energy_kwh=round(total_energy, 1),
