@@ -83,6 +83,21 @@
       vertical-align: top;
     }
 
+    .risk-low {
+      color: #2f6b3f;
+      font-weight: bold;
+    }
+
+    .risk-medium {
+      color: #b36b00;
+      font-weight: bold;
+    }
+
+    .risk-high {
+      color: #a32626;
+      font-weight: bold;
+    }
+
     .page-break {
       page-break-before: always;
     }
@@ -107,11 +122,9 @@
         <td>{{ cave.name }}</td>
       </tr>
       <tr>
-      <tr>
         <th>Adresse</th>
         <td>{{ cave.address or "Non renseignée" }}</td>
       </tr>
-
       <tr>
         <th>Coordonnées GPS</th>
         <td>
@@ -122,16 +135,15 @@
           {% endif %}
         </td>
       </tr>
-
       <tr>
         <th>Source météo</th>
         <td>{{ simulation.weather_source }}</td>
       </tr>
-
       <tr>
         <th>Température sol</th>
         <td>{{ simulation.soil_temperature_c }} °C</td>
       </tr>
+      <tr>
         <th>Région climatique</th>
         <td>{{ cave.region }}</td>
       </tr>
@@ -164,9 +176,7 @@
 
   <h2>Plan thermique 2D</h2>
 
-  <p>
-    Vue schématique des zones thermiques de la cave.
-  </p>
+  <p>Vue schématique des zones thermiques de la cave.</p>
 
   <svg
     width="700"
@@ -225,27 +235,15 @@
       {{ zone.name }}
     </text>
 
-    <text
-      x="{{ 90 + zone.x_m * scale_x }}"
-      y="{{ 145 + zone.y_m * scale_y }}"
-      font-size="16"
-    >
+    <text x="{{ 90 + zone.x_m * scale_x }}" y="{{ 145 + zone.y_m * scale_y }}" font-size="16">
       Hiver : {{ zone.target_temp_winter_c }} °C
     </text>
 
-    <text
-      x="{{ 90 + zone.x_m * scale_x }}"
-      y="{{ 170 + zone.y_m * scale_y }}"
-      font-size="16"
-    >
+    <text x="{{ 90 + zone.x_m * scale_x }}" y="{{ 170 + zone.y_m * scale_y }}" font-size="16">
       Été : {{ zone.target_temp_summer_c }} °C
     </text>
 
-    <text
-      x="{{ 90 + zone.x_m * scale_x }}"
-      y="{{ 195 + zone.y_m * scale_y }}"
-      font-size="16"
-    >
+    <text x="{{ 90 + zone.x_m * scale_x }}" y="{{ 195 + zone.y_m * scale_y }}" font-size="16">
       HR : {{ zone.target_humidity_percent }} %
     </text>
     {% endfor %}
@@ -287,16 +285,43 @@
     </div>
   </div>
 
-  <h2>3. Résultats mensuels</h2>
+  <h2>3. Ventilation / renouvellement d’air</h2>
+
+  <table>
+    <tbody>
+      <tr>
+        <th>Ventilation activée</th>
+        <td>{% if cave.ventilation_enabled %}Oui{% else %}Non{% endif %}</td>
+      </tr>
+      <tr>
+        <th>Renouvellement d’air</th>
+        <td>{{ cave.ventilation_rate_ach or 0 }} vol/h</td>
+      </tr>
+      <tr>
+        <th>Besoins chaud liés à la ventilation</th>
+        <td>{{ simulation.ventilation_heating_kwh }} kWh/an</td>
+      </tr>
+      <tr>
+        <th>Besoins froid liés à la ventilation</th>
+        <td>{{ simulation.ventilation_cooling_kwh }} kWh/an</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>4. Résultats mensuels</h2>
 
   <table>
     <thead>
       <tr>
         <th>Mois</th>
-        <th>Temp. extérieure [°C]</th>
+        <th>Temp. ext. [°C]</th>
         <th>Temp. effective [°C]</th>
         <th>Chaud [kWh]</th>
         <th>Froid [kWh]</th>
+        <th>Vent. chaud [kWh]</th>
+        <th>Vent. froid [kWh]</th>
+        <th>Point rosée [°C]</th>
+        <th>Risque condensation</th>
       </tr>
     </thead>
     <tbody>
@@ -307,12 +332,24 @@
         <td>{{ month.effective_temp_c }}</td>
         <td>{{ month.heating_kwh }}</td>
         <td>{{ month.cooling_kwh }}</td>
+        <td>{{ month.ventilation_heating_kwh }}</td>
+        <td>{{ month.ventilation_cooling_kwh }}</td>
+        <td>{{ month.dew_point_c }}</td>
+        <td>
+          {% if month.condensation_risk == "élevé" %}
+            <span class="risk-high">Élevé</span>
+          {% elif month.condensation_risk == "moyen" %}
+            <span class="risk-medium">Moyen</span>
+          {% else %}
+            <span class="risk-low">Faible</span>
+          {% endif %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
 
-  <h2>Bilan annuel par paroi</h2>
+  <h2>5. Bilan annuel par paroi</h2>
 
   <table>
     <thead>
@@ -339,7 +376,7 @@
     </tbody>
   </table>
 
-  <h2>Recommandations automatiques</h2>
+  <h2>6. Recommandations automatiques</h2>
 
   {% set sorted_walls = simulation.wall_results|sort(attribute="total_kwh", reverse=True) %}
 
@@ -365,7 +402,7 @@
 
   <div class="page-break"></div>
 
-  <h2>4. Scénarios de rénovation</h2>
+  <h2>7. Scénarios de rénovation</h2>
 
   <table>
     <thead>
@@ -401,7 +438,7 @@
     </tbody>
   </table>
 
-  <h2>Scénarios personnalisés enregistrés</h2>
+  <h2>8. Scénarios personnalisés enregistrés</h2>
 
   {% if saved_scenarios_results %}
   <table>
@@ -440,7 +477,7 @@
   <p>Aucun scénario personnalisé enregistré.</p>
   {% endif %}
 
-  <h2>5. Hypothèses</h2>
+  <h2>9. Hypothèses</h2>
 
   <ul>
     <li>Calcul mensuel basé sur la source météo indiquée dans le rapport.</li>
@@ -448,8 +485,10 @@
     <li>Si la météo dynamique n’est pas disponible, la région climatique de secours est utilisée.</li>
     <li>Température effective = température extérieure, température sol ou combinaison des deux selon le type de paroi et le facteur d’enterrement.</li>
     <li>Formule enveloppe : Q = U × A × ΔT × heures.</li>
+    <li>Formule ventilation : Q = 0.34 × débit d’air × ΔT × heures.</li>
+    <li>Le point de rosée est estimé à partir de la température effective et de l’humidité cible moyenne des zones.</li>
     <li>Les besoins process chaud/froid sont répartis uniquement sur les mois sélectionnés.</li>
-    <li>Les résultats mensuels incluent enveloppe + process.</li>
+    <li>Les résultats mensuels incluent enveloppe + process + ventilation.</li>
     <li>Les parois sont corrigées par le facteur d’inertie du matériau.</li>
   </ul>
 
@@ -459,14 +498,14 @@
 
   <hr style="margin-top:40px;">
 
-<p style="font-size:12px; color:#666;">
-Contact : Groupe œnologie, Agroscope Changins —
-gilles.bourdin@agroscope.admin.ch
-</p>
+  <p style="font-size:12px; color:#666;">
+    Contact : Groupe œnologie, Agroscope Changins —
+    gilles.bourdin@agroscope.admin.ch
+  </p>
 
-<p style="font-size:11px; color:#888;">
-SimulCave © Agroscope / projet SimulCave —
-outil d’aide à la décision pour les caves viticoles.
-</p>
+  <p style="font-size:11px; color:#888;">
+    SimulCave © Agroscope / projet SimulCave —
+    outil d’aide à la décision pour les caves viticoles.
+  </p>
 </body>
 </html>

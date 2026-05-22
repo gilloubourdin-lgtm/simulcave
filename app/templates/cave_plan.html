@@ -12,6 +12,14 @@
   <button onclick="zoomPlan(0.8)">− Zoom</button>
   <button onclick="zoomPlan(1.2)">+ Zoom</button>
   <button onclick="resetZoom()">Réinitialiser</button>
+  <button onclick="setThermalMode('winter')">Temp. hiver</button>
+  <button onclick="setThermalMode('summer')">Temp. été</button>
+</div>
+
+<div class="thermal-legend">
+  <span>Froid</span>
+  <div class="thermal-gradient"></div>
+  <span>Chaud</span>
 </div>
 
 <div class="plan-scroll">
@@ -56,11 +64,14 @@
 
       {% for zone in cave.zones %}
       <rect
+        class="thermal-zone"
+        data-winter="{{ zone.target_temp_winter_c }}"
+        data-summer="{{ zone.target_temp_summer_c }}"
         x="{{ 40 + zone.x_m * scale }}"
         y="{{ 40 + zone.y_m * scale }}"
         width="{{ zone.length_m * scale }}"
         height="{{ zone.width_m * scale }}"
-        fill="{% if loop.index is odd %}#dbeafe{% else %}#ead7dd{% endif %}"
+        fill="#dbeafe"
         stroke="#1e3a8a"
         stroke-width="2"
         rx="6"
@@ -103,6 +114,27 @@ function resetZoom() {
   planScale = 1;
   document.getElementById("planZoom").style.transform = "scale(1)";
 }
+
+function temperatureToColor(temp) {
+  if (temp <= 8) return "#1e40af";
+  if (temp <= 10) return "#2563eb";
+  if (temp <= 12) return "#38bdf8";
+  if (temp <= 14) return "#86efac";
+  if (temp <= 16) return "#facc15";
+  if (temp <= 18) return "#fb923c";
+  return "#dc2626";
+}
+
+function setThermalMode(mode) {
+  const zones = document.querySelectorAll(".thermal-zone");
+
+  zones.forEach(zone => {
+    const temp = parseFloat(zone.dataset[mode]);
+    zone.setAttribute("fill", temperatureToColor(temp));
+  });
+}
+
+setThermalMode("winter");
 </script>
 
 <h3>Détail des zones</h3>

@@ -303,3 +303,33 @@ canvas {
   color: #666;
   margin-top: 0.3rem;
 }
+
+.thermal-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 1rem 0;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.thermal-gradient {
+  width: 260px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: linear-gradient(
+    90deg,
+    #1e40af,
+    #2563eb,
+    #38bdf8,
+    #86efac,
+    #facc15,
+    #fb923c,
+    #dc2626
+  );
+}
+
+.thermal-zone {
+  transition: fill 0.25s ease;
+}
