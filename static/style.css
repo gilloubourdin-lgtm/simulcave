@@ -205,3 +205,16 @@ canvas {
   margin-bottom: 0.5rem;
   color: #3b1f2b;
 }
+
+.btn-danger {
+    background: #a32626;
+    color: white;
+    border: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-danger:hover {
+    background: #7d1c1c;
+}
