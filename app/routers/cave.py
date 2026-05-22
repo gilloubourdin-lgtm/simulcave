@@ -240,6 +240,9 @@ def create_cave(
         latitude=latitude,
         longitude=longitude,
         use_dynamic_weather=dynamic_weather_enabled,
+
+        ventilation_enabled=True,
+        ventilation_rate_ach=0.10,
     )
 
     db.add(cave)
