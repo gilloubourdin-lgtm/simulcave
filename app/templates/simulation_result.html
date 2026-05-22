@@ -107,6 +107,43 @@
   </tbody>
 </table>
 
+<h3>Heatmap mensuelle des besoins énergétiques</h3>
+
+<p class="help-text">
+Couleur plus foncée = besoin énergétique mensuel plus élevé.
+</p>
+
+<div class="heatmap-grid">
+    {% for month in result.monthly_results %}
+        {% set total_month_kwh = month.heating_kwh + month.cooling_kwh %}
+        <div class="heatmap-cell"
+             data-value="{{ total_month_kwh }}">
+            <strong>{{ month.month }}</strong>
+            <span>{{ total_month_kwh|round(1) }} kWh</span>
+        </div>
+    {% endfor %}
+</div>
+
+<script>
+document.querySelectorAll(".heatmap-grid").forEach(grid => {
+    const cells = grid.querySelectorAll(".heatmap-cell");
+
+    const values = Array.from(cells).map(cell =>
+        parseFloat(cell.dataset.value || "0")
+    );
+
+    const maxValue = Math.max(...values, 1);
+
+    cells.forEach(cell => {
+        const value = parseFloat(cell.dataset.value || "0");
+        const intensity = value / maxValue;
+
+        const lightness = 95 - intensity * 45;
+        cell.style.backgroundColor = `hsl(345, 45%, ${lightness}%)`;
+    });
+});
+</script>
+
 <h3>Graphique par paroi</h3>
 <canvas id="wallChart" height="120"></canvas>
 
