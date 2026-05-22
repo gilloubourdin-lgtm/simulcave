@@ -61,6 +61,14 @@
         <a href="/caves/{{ cave.id }}/simulate">Simulation</a><br>
         <a href="/caves/{{ cave.id }}/plan">Plan</a><br>
         <a href="/caves/{{ cave.id }}/report/pdf">PDF</a>
+        <form method="post"
+              action="/caves/{{ cave.id }}/delete"
+              onsubmit="return confirm('Supprimer cette cave ?');"
+              style="display:inline;">
+            <button type="submit" class="btn-danger">
+                Supprimer
+            </button>
+        </form>
       </td>
     </tr>
     {% endfor %}
