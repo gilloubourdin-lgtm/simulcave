@@ -1,5 +1,3 @@
-# app/services/renovation.py
-
 from dataclasses import dataclass
 from copy import deepcopy
 
@@ -35,22 +33,26 @@ def apply_u_value_reduction(cave, wall_filter, reduction_factor: float):
     return cave_copy
 
 
-def calculate_scenario(
+def apply_ventilation_optimization(
     cave,
+    target_ventilation_rate_ach: float = 0.05,
+):
+    cave_copy = deepcopy(cave)
+
+    cave_copy.ventilation_enabled = True
+    cave_copy.ventilation_rate_ach = target_ventilation_rate_ach
+
+    return cave_copy
+
+
+def build_scenario_result(
+    cave,
+    renovated_cave,
     name: str,
     description: str,
     investment_chf: float,
-    wall_filter,
-    reduction_factor: float,
 ) -> RenovationScenario:
     before = simulate_cave(cave)
-
-    renovated_cave = apply_u_value_reduction(
-        cave=cave,
-        wall_filter=wall_filter,
-        reduction_factor=reduction_factor,
-    )
-
     after = simulate_cave(renovated_cave)
 
     before_energy = before.total_heating_kwh + before.total_cooling_kwh
@@ -79,6 +81,54 @@ def calculate_scenario(
     )
 
 
+def calculate_scenario(
+    cave,
+    name: str,
+    description: str,
+    investment_chf: float,
+    wall_filter,
+    reduction_factor: float,
+) -> RenovationScenario:
+    renovated_cave = apply_u_value_reduction(
+        cave=cave,
+        wall_filter=wall_filter,
+        reduction_factor=reduction_factor,
+    )
+
+    return build_scenario_result(
+        cave=cave,
+        renovated_cave=renovated_cave,
+        name=name,
+        description=description,
+        investment_chf=investment_chf,
+    )
+
+
+def calculate_ventilation_scenario(
+    cave,
+    target_ventilation_rate_ach: float = 0.05,
+    investment_chf: float = 5000,
+) -> RenovationScenario:
+    current_rate = getattr(cave, "ventilation_rate_ach", 0.10) or 0.10
+
+    renovated_cave = apply_ventilation_optimization(
+        cave=cave,
+        target_ventilation_rate_ach=target_ventilation_rate_ach,
+    )
+
+    return build_scenario_result(
+        cave=cave,
+        renovated_cave=renovated_cave,
+        name="Ventilation optimisée",
+        description=(
+            "Réduction des pertes liées au renouvellement d’air "
+            f"par meilleure étanchéité ou pilotage de la ventilation "
+            f"({current_rate:.2f} → {target_ventilation_rate_ach:.2f} vol/h)."
+        ),
+        investment_chf=investment_chf,
+    )
+
+
 def generate_renovation_scenarios(cave) -> list[RenovationScenario]:
     return [
         calculate_scenario(
@@ -104,5 +154,10 @@ def generate_renovation_scenarios(cave) -> list[RenovationScenario]:
             investment_chf=65000,
             wall_filter=lambda wall: True,
             reduction_factor=0.55,
+        ),
+        calculate_ventilation_scenario(
+            cave=cave,
+            target_ventilation_rate_ach=0.05,
+            investment_chf=5000,
         ),
     ]
