@@ -3,37 +3,35 @@ import smtplib
 from email.message import EmailMessage
 
 
-def send_email(to_email: str, subject: str, body: str):
-    smtp_host = os.getenv("SMTP_HOST")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER")
-    smtp_password = os.getenv("SMTP_PASSWORD")
-    smtp_from = os.getenv("SMTP_FROM", smtp_user)
-
-    if not smtp_host or not smtp_user or not smtp_password:
-        print("SMTP non configuré.")
-        print("TO:", to_email)
-        print("SUBJECT:", subject)
+def send_email(to_email: str, subject: str, body: str) -> bool:
+    if os.getenv("EMAIL_BACKEND", "console") == "console":
+        print("\n--- EMAIL DEV SimulCave ---")
+        print(f"To: {to_email}")
+        print(f"Subject: {subject}")
         print(body)
-        return False
+        print("--- END EMAIL ---\n")
+        return True
 
     msg = EmailMessage()
-    msg["From"] = smtp_from
+    msg["From"] = os.getenv("SMTP_FROM", "noreply@simulcave.ch")
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.set_content(body)
 
-    print("EMAIL_BACKEND =", os.getenv("EMAIL_BACKEND"))
-    print("SMTP_HOST =", smtp_host)
-    print("SMTP_PORT =", smtp_port)
-    print("SMTP_USER =", smtp_user)
-    print("SMTP_FROM =", smtp_from)
-
     try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.send_message(msg)
+        with smtplib.SMTP(
+            os.getenv("SMTP_HOST"),
+            int(os.getenv("SMTP_PORT", "587")),
+            timeout=20,
+        ) as smtp:
+            smtp.starttls()
+            smtp.login(
+                os.getenv("SMTP_USER"),
+                os.getenv("SMTP_PASSWORD"),
+            )
+            smtp.send_message(msg)
+
+        print("Email envoyé à", to_email)
         return True
 
     except Exception as e:
