@@ -53,7 +53,7 @@
     <a class="button" href="/caves/{{ cave.id }}/report/pdf">Rapport PDF</a>
     <a class="button" href="/caves/{{ cave.id }}/export/csv">Export CSV</a>
     <a class="button" href="/caves/{{ cave.id }}/export/xlsx">Export Excel</a>
-    <a href="{{ url_for('export_for_nrcave', cave_id=cave.id) }}">
+    <a href="/export/nrcave/{{ cave.id }}">
       Export NRCave JSON
     </a>
   </div>
