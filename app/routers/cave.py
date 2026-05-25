@@ -1109,3 +1109,15 @@ def delete_cave(
     db.commit()
 
     return RedirectResponse(url="/caves", status_code=303)
+
+@router.get("/export/nrcave/{simulation_id}")
+def export_for_nrcave(
+    simulation_id: int,
+):
+    simulation_result = ...
+
+    payload = build_nrcave_payload(
+        simulation_result,
+    )
+
+    return JSONResponse(content=payload)
