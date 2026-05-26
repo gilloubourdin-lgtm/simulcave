@@ -1126,23 +1126,20 @@ def export_for_nrcave(
     cooling_needs = []
     temperature_monthly = []
     humidity_monthly = []
+    humidity_risk_index_monthly = []
 
     for month in result.monthly_results:
         thermal_needs.append(float(month.heating_kwh or 0.0))
         cooling_needs.append(float(month.cooling_kwh or 0.0))
         temperature_monthly.append(float(month.effective_temp_c or 0.0))
 
-        # SimulCave ne calcule pas encore une humidité dynamique réelle.
-        # On exporte donc la cible moyenne des zones comme fallback.
-        if cave.zones:
-            avg_humidity = sum(
-                float(z.target_humidity_percent or 75.0)
-                for z in cave.zones
-            ) / len(cave.zones)
-        else:
-            avg_humidity = 75.0
+        humidity_monthly.append(
+            float(month.relative_humidity_percent or 75.0)
+        )
 
-        humidity_monthly.append(round(avg_humidity, 1))
+        humidity_risk_index_monthly.append(
+            float(month.humidity_risk_index or 0.0)
+        )
 
     total_thermal_kwh = sum(thermal_needs)
 
@@ -1172,7 +1169,7 @@ def export_for_nrcave(
     simulation_result = {
         "thermal_needs_kwh_monthly": thermal_needs,
         "cooling_needs_kwh_monthly": cooling_needs,
-        "humidity_risk_index_monthly": [0.0] * 12,
+        "humidity_risk_index_monthly": humidity_risk_index_monthly,
         "recommended_hvac_power_kw": recommended_hvac_power_kw,
         "temperature_monthly": temperature_monthly,
         "humidity_monthly": humidity_monthly,

@@ -14,6 +14,9 @@ class MonthlyResult:
     ventilation_cooling_kwh: float
     dew_point_c: float
     condensation_risk: str
+    relative_humidity_percent: float
+    humidity_risk_index: float
+    humidity_stability_label: str
 
 
 @dataclass
@@ -296,10 +299,43 @@ def simulate_cave(cave) -> SimulationResult:
         else:
             effective_temp = outdoor_temp
 
-        humidity_values = [
-            getattr(zone, "target_humidity_pct", 75) or 75
+        base_humidity_values = [
+            getattr(zone, "target_humidity_percent", 75) or 75
             for zone in cave.zones
         ]
+
+        base_humidity = (
+            sum(base_humidity_values) / len(base_humidity_values)
+            if base_humidity_values
+            else 75
+        )
+
+        avg_humidity = (
+            base_humidity
+            - ((effective_temp - 12.0) * 1.8)
+        )
+
+        avg_humidity = max(55.0, min(95.0, avg_humidity))
+
+        humidity_risk_index = 0.0
+
+        if avg_humidity < 65:
+            humidity_risk_index += 0.6
+
+        if avg_humidity > 90:
+            humidity_risk_index += 0.5
+
+        if effective_temp > 18:
+            humidity_risk_index += 0.2
+
+        humidity_risk_index = max(0.0, min(1.0, humidity_risk_index))
+
+        if humidity_risk_index >= 0.6:
+            humidity_stability_label = "critique"
+        elif humidity_risk_index >= 0.3:
+            humidity_stability_label = "à surveiller"
+        else:
+            humidity_stability_label = "stable"
 
         avg_humidity = (
             sum(humidity_values) / len(humidity_values)
@@ -328,6 +364,9 @@ def simulate_cave(cave) -> SimulationResult:
                 ventilation_cooling_kwh=round(month_ventilation_cooling, 1),
                 dew_point_c=round(dew_point, 1),
                 condensation_risk=condensation_risk,
+                relative_humidity_percent=round(avg_humidity, 1),
+                humidity_risk_index=round(humidity_risk_index, 3),
+                humidity_stability_label=humidity_stability_label,
             )
         )
 
