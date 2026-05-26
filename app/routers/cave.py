@@ -1124,10 +1124,25 @@ def export_for_nrcave(
 
     thermal_needs = []
     cooling_needs = []
+    temperature_monthly = []
+    humidity_monthly = []
 
     for month in result.monthly_results:
         thermal_needs.append(float(month.heating_kwh or 0.0))
         cooling_needs.append(float(month.cooling_kwh or 0.0))
+        temperature_monthly.append(float(month.effective_temp_c or 0.0))
+
+        # SimulCave ne calcule pas encore une humidité dynamique réelle.
+        # On exporte donc la cible moyenne des zones comme fallback.
+        if cave.zones:
+            avg_humidity = sum(
+                float(z.target_humidity_percent or 75.0)
+                for z in cave.zones
+            ) / len(cave.zones)
+        else:
+            avg_humidity = 75.0
+
+        humidity_monthly.append(round(avg_humidity, 1))
 
     total_thermal_kwh = sum(thermal_needs)
 
@@ -1135,11 +1150,34 @@ def export_for_nrcave(
     if total_thermal_kwh > 0:
         recommended_hvac_power_kw = round(total_thermal_kwh / 1800.0, 1)
 
+    summer_cooling = sum(cooling_needs[5:8])
+
+    passive_cooling_ratio = 0.0
+    if summer_cooling > 0:
+        passive_cooling_ratio = max(
+            0.0,
+            min(1.0, 1.0 - (summer_cooling / 50000.0)),
+        )
+
+    if temperature_monthly:
+        thermal_amplitude = max(temperature_monthly) - min(temperature_monthly)
+    else:
+        thermal_amplitude = 0.0
+
+    thermal_stability_index = max(
+        0.0,
+        min(100.0, 100.0 - thermal_amplitude * 6.0),
+    )
+
     simulation_result = {
         "thermal_needs_kwh_monthly": thermal_needs,
         "cooling_needs_kwh_monthly": cooling_needs,
         "humidity_risk_index_monthly": [0.0] * 12,
         "recommended_hvac_power_kw": recommended_hvac_power_kw,
+        "temperature_monthly": temperature_monthly,
+        "humidity_monthly": humidity_monthly,
+        "thermal_stability_index": round(thermal_stability_index, 1),
+        "passive_cooling_ratio": round(passive_cooling_ratio, 3),
     }
 
     payload = build_nrcave_payload(simulation_result)
