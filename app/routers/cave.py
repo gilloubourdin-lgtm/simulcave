@@ -2,11 +2,12 @@
 
 import csv
 import io
+import json
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
-from fastapi.responses import RedirectResponse, Response
+from fastapi.responses import RedirectResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
@@ -1143,4 +1144,7 @@ def export_for_nrcave(
 
     payload = build_nrcave_payload(simulation_result)
 
-    return payload
+    return Response(
+        content=json.dumps(payload, indent=2, ensure_ascii=False),
+        media_type="application/json",
+    )
