@@ -337,12 +337,6 @@ def simulate_cave(cave) -> SimulationResult:
         else:
             humidity_stability_label = "stable"
 
-        avg_humidity = (
-            sum(humidity_values) / len(humidity_values)
-            if humidity_values
-            else 75
-        )
-
         dew_point = dew_point_c(
             temperature_c=effective_temp,
             relative_humidity_pct=avg_humidity,
