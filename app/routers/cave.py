@@ -1111,14 +1111,36 @@ def delete_cave(
 
     return RedirectResponse(url="/caves", status_code=303)
 
-@router.get("/export/nrcave/{simulation_id}")
+@router.get("/export/nrcave/{cave_id}")
 def export_for_nrcave(
-    simulation_id: int,
+    cave_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
 ):
-    simulation_result = ...
+    cave = get_user_cave(db, cave_id, current_user)
 
-    payload = build_nrcave_payload(
-        simulation_result,
-    )
+    result = simulate_cave(cave)
 
-    return JSONResponse(content=payload)
+    thermal_needs = []
+    cooling_needs = []
+
+    for month in result.monthly_results:
+        thermal_needs.append(float(month.heating_kwh or 0.0))
+        cooling_needs.append(float(month.cooling_kwh or 0.0))
+
+    total_thermal_kwh = sum(thermal_needs)
+
+    recommended_hvac_power_kw = 0.0
+    if total_thermal_kwh > 0:
+        recommended_hvac_power_kw = round(total_thermal_kwh / 1800.0, 1)
+
+    simulation_result = {
+        "thermal_needs_kwh_monthly": thermal_needs,
+        "cooling_needs_kwh_monthly": cooling_needs,
+        "humidity_risk_index_monthly": [0.0] * 12,
+        "recommended_hvac_power_kw": recommended_hvac_power_kw,
+    }
+
+    payload = build_nrcave_payload(simulation_result)
+
+    return payload
