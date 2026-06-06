@@ -71,6 +71,10 @@ document.querySelectorAll(".monthly-heat-cell").forEach(cell => {
   <button type="button" onclick="applyProfile('vinification')">
     Vinification FA/FML
   </button>
+
+  <button type="button" onclick="copyFirstZoneToAll()">
+    Copier la première zone vers toutes les zones
+    </button>
 </section>
 
 <form method="post">
@@ -144,10 +148,29 @@ const profiles = {
   vinification: [10, 10, 12, 12, 13, 14, 16, 16, 13, 10, 8, 8]
 };
 
+function refreshHeatmapFromInputs() {
+  document.querySelectorAll(".monthly-heatmap tbody tr").forEach((heatRow, rowIndex) => {
+    const inputRow = document.querySelectorAll(".monthly-target-table tbody tr")[rowIndex];
+    if (!inputRow) return;
+
+    heatRow.querySelectorAll(".monthly-heat-cell").forEach((cell, monthIndex) => {
+      const month = monthIndex + 1;
+      const input = inputRow.querySelector(`input[name^="temp_"][name$="_${month}"]`);
+
+      if (input) {
+        const temp = parseFloat(input.value || "12");
+        cell.dataset.temp = temp;
+        cell.textContent = `${temp} °C`;
+        cell.style.backgroundColor = tempToHeatColor(temp);
+      }
+    });
+  });
+}
+
 function applyProfile(profileName) {
   const values = profiles[profileName];
 
-  document.querySelectorAll("tbody tr").forEach(row => {
+  document.querySelectorAll(".monthly-target-table tbody tr").forEach(row => {
     values.forEach((temp, index) => {
       const month = index + 1;
       const input = row.querySelector(`input[name^="temp_"][name$="_${month}"]`);
@@ -158,17 +181,44 @@ function applyProfile(profileName) {
     });
   });
 
-  document.querySelectorAll(".monthly-heat-cell").forEach(cell => {
-    const zoneRow = cell.closest("tr");
-    const monthIndex = Array.from(cell.parentNode.children).indexOf(cell);
-    const temp = values[monthIndex - 1];
-
-    if (temp !== undefined) {
-      cell.dataset.temp = temp;
-      cell.textContent = `${temp} °C`;
-      cell.style.backgroundColor = tempToHeatColor(temp);
-    }
-  });
+  refreshHeatmapFromInputs();
 }
+
+function copyFirstZoneToAll() {
+  const rows = document.querySelectorAll(".monthly-target-table tbody tr");
+
+  if (rows.length < 2) {
+    return;
+  }
+
+  const firstRow = rows[0];
+
+  for (let month = 1; month <= 12; month++) {
+    const sourceTemp = firstRow.querySelector(`input[name^="temp_"][name$="_${month}"]`);
+    const sourceHumidity = firstRow.querySelector(`input[name^="humidity_"][name$="_${month}"]`);
+    const sourcePhase = firstRow.querySelector(`input[name^="phase_"][name$="_${month}"]`);
+
+    rows.forEach((row, index) => {
+      if (index === 0) return;
+
+      const targetTemp = row.querySelector(`input[name^="temp_"][name$="_${month}"]`);
+      const targetHumidity = row.querySelector(`input[name^="humidity_"][name$="_${month}"]`);
+      const targetPhase = row.querySelector(`input[name^="phase_"][name$="_${month}"]`);
+
+      if (sourceTemp && targetTemp) targetTemp.value = sourceTemp.value;
+      if (sourceHumidity && targetHumidity) targetHumidity.value = sourceHumidity.value;
+      if (sourcePhase && targetPhase) targetPhase.value = sourcePhase.value;
+    });
+  }
+
+  refreshHeatmapFromInputs();
+  alert("Profil de la première zone copié vers toutes les autres zones.");
+}
+
+document.querySelectorAll('input[name^="temp_"]').forEach(input => {
+  input.addEventListener("input", refreshHeatmapFromInputs);
+});
+
+refreshHeatmapFromInputs();
 </script>
 {% endblock %}
