@@ -8,6 +8,55 @@
 Définissez les températures cibles et l’humidité cible pour chaque zone et chaque mois.
 </p>
 
+<h3>Vue thermique annuelle</h3>
+
+<div class="table-scroll">
+  <table class="monthly-heatmap">
+    <thead>
+      <tr>
+        <th>Zone</th>
+        {% for month_number, month_name in months %}
+          <th>{{ month_name }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for zone in cave.zones %}
+      <tr>
+        <td><strong>{{ zone.name }}</strong></td>
+
+        {% for month_number, month_name in months %}
+          {% set target = zone.monthly_targets|selectattr("month", "equalto", month_number)|first %}
+          {% set temp = target.target_temp_c if target else 12 %}
+
+          <td class="monthly-heat-cell"
+              data-temp="{{ temp }}">
+            {{ temp }} °C
+          </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function tempToHeatColor(temp) {
+  if (temp <= 8) return "#1e40af";
+  if (temp <= 10) return "#2563eb";
+  if (temp <= 12) return "#38bdf8";
+  if (temp <= 14) return "#86efac";
+  if (temp <= 16) return "#facc15";
+  if (temp <= 18) return "#fb923c";
+  return "#dc2626";
+}
+
+document.querySelectorAll(".monthly-heat-cell").forEach(cell => {
+  const temp = parseFloat(cell.dataset.temp || "12");
+  cell.style.backgroundColor = tempToHeatColor(temp);
+});
+</script>
+
 <form method="post">
 
   <div class="table-scroll">
