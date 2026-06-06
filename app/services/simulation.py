@@ -395,13 +395,11 @@ def simulate_cave(cave) -> SimulationResult:
 
     total_heating = (
         total_envelope_heating
-        + total_process_heating
         + total_ventilation_heating
     )
 
     total_cooling = (
         total_envelope_cooling
-        + total_process_cooling
         + total_ventilation_cooling
     )
 
