@@ -284,30 +284,38 @@ def create_cave(
     db.add_all(walls)
 
     total_volume = length_m * width_m * height_m
+    zone_count = max(int(zone_count), 1)
+
     default_zone_volume = total_volume / zone_count
+    zone_length = length_m / zone_count
+
+    zones = []
 
     for i in range(zone_count):
-        zone_length = length_m / zone_count
-
-        zone = Zone(
-            cave_id=cave.id,
-            name=f"Zone {i + 1}",
-            volume_m3=default_zone_volume,
-            target_temp_winter_c=12,
-            target_temp_summer_c=16,
-            target_humidity_percent=75,
-            process_cooling_kwh=0,
-            process_heating_kwh=0,
-            x_m=i * zone_length,
-            y_m=0,
-            width_m=width_m,
-            length_m=zone_length,
-            process_heating_start_month=1,
-            process_heating_end_month=12,
-            process_cooling_start_month=1,
-            process_cooling_end_month=12,
+        zones.append(
+            Zone(
+                cave_id=cave.id,
+                name=f"Zone {i + 1}",
+                volume_m3=default_zone_volume,
+                target_temp_winter_c=12,
+                target_temp_summer_c=16,
+                target_humidity_percent=75,
+                process_cooling_kwh=0,
+                process_heating_kwh=0,
+                x_m=i * zone_length,
+                y_m=0,
+                width_m=width_m,
+                length_m=zone_length,
+                process_heating_start_month=1,
+                process_heating_end_month=12,
+                process_cooling_start_month=1,
+                process_cooling_end_month=12,
+            )
         )
-        db.add(zone)
+
+    db.add_all(zones)
+
+    print(f"Cave créée avec {len(zones)} zone(s)")
 
     db.commit()
 
