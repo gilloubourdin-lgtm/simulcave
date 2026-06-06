@@ -57,6 +57,22 @@ document.querySelectorAll(".monthly-heat-cell").forEach(cell => {
 });
 </script>
 
+<section class="action-panel">
+  <h3>Profils rapides</h3>
+
+  <button type="button" onclick="applyProfile('refrigerated')">
+    Cave réfrigérée
+  </button>
+
+  <button type="button" onclick="applyProfile('temperate')">
+    Cave tempérée
+  </button>
+
+  <button type="button" onclick="applyProfile('vinification')">
+    Vinification FA/FML
+  </button>
+</section>
+
 <form method="post">
 
   <div class="table-scroll">
@@ -121,5 +137,38 @@ document.querySelectorAll(".monthly-heat-cell").forEach(cell => {
 <p>
   <a class="button" href="/caves/{{ cave.id }}">Retour à la cave</a>
 </p>
+<script>
+const profiles = {
+  refrigerated: [5, 5, 5, 12, 12, 12, 12, 12, 12, 12, 5, 5],
+  temperate: [18, 18, 18, 19, 19, 19, 19, 19, 19, 19, 18, 18],
+  vinification: [10, 10, 12, 12, 13, 14, 16, 16, 13, 10, 8, 8]
+};
 
+function applyProfile(profileName) {
+  const values = profiles[profileName];
+
+  document.querySelectorAll("tbody tr").forEach(row => {
+    values.forEach((temp, index) => {
+      const month = index + 1;
+      const input = row.querySelector(`input[name^="temp_"][name$="_${month}"]`);
+
+      if (input) {
+        input.value = temp;
+      }
+    });
+  });
+
+  document.querySelectorAll(".monthly-heat-cell").forEach(cell => {
+    const zoneRow = cell.closest("tr");
+    const monthIndex = Array.from(cell.parentNode.children).indexOf(cell);
+    const temp = values[monthIndex - 1];
+
+    if (temp !== undefined) {
+      cell.dataset.temp = temp;
+      cell.textContent = `${temp} °C`;
+      cell.style.backgroundColor = tempToHeatColor(temp);
+    }
+  });
+}
+</script>
 {% endblock %}
