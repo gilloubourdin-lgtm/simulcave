@@ -1,6 +1,6 @@
 # app/models.py
 
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
@@ -109,6 +109,30 @@ class Zone(Base):
     process_heating_end_month = Column(Integer, default=12)
     process_cooling_start_month = Column(Integer, default=1)
     process_cooling_end_month = Column(Integer, default=12)
+
+    monthly_targets = relationship(
+        "ZoneMonthlyTarget",
+        back_populates="zone",
+        cascade="all, delete-orphan",
+        order_by="ZoneMonthlyTarget.month",
+    )
+
+class ZoneMonthlyTarget(Base):
+    __tablename__ = "zone_monthly_targets"
+
+    id = Column(Integer, primary_key=True, index=True)
+    zone_id = Column(Integer, ForeignKey("zones.id", ondelete="CASCADE"), nullable=False)
+
+    month = Column(Integer, nullable=False)
+    target_temp_c = Column(Float, nullable=False)
+    target_humidity_percent = Column(Float, default=75)
+    phase = Column(String, default="standard")
+
+    zone = relationship("Zone", back_populates="monthly_targets")
+
+    __table_args__ = (
+        UniqueConstraint("zone_id", "month", name="uq_zone_monthly_target"),
+    )
 
 class WeatherData(Base):
     __tablename__ = "weather_data"

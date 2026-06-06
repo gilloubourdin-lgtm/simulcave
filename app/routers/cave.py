@@ -12,7 +12,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Cave, Wall, Zone, User, RenovationScenarioDB
+from app.models import Cave, Wall, Zone, User, RenovationScenarioDB, ZoneMonthlyTarget
 from app.routers.auth import require_user
 from app.services.simulation import simulate_cave
 from app.services.materials import get_material_properties
@@ -211,20 +211,15 @@ def create_cave(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
-    if zone_count < 1:
-        raise HTTPException(
-            status_code=400,
-            detail="Le nombre de zones doit être au moins 1.",
-        )
+    zone_count = max(int(zone_count), 1)
 
     dynamic_weather_enabled = use_dynamic_weather == "true"
 
-    if dynamic_weather_enabled:
-        if latitude is None or longitude is None:
-            place = geocode_address(address)
-            if place:
-                latitude = place["latitude"]
-                longitude = place["longitude"]
+    if dynamic_weather_enabled and (latitude is None or longitude is None):
+        place = geocode_address(address)
+        if place:
+            latitude = place["latitude"]
+            longitude = place["longitude"]
 
     cave = Cave(
         name=name,
@@ -242,7 +237,6 @@ def create_cave(
         latitude=latitude,
         longitude=longitude,
         use_dynamic_weather=dynamic_weather_enabled,
-
         ventilation_enabled=True,
         ventilation_rate_ach=0.10,
     )
@@ -283,37 +277,64 @@ def create_cave(
 
     db.add_all(walls)
 
-    total_volume = length_m * width_m * height_m
-    zone_count = max(int(zone_count), 1)
+    default_monthly_profile = {
+        1: (10, 75, "FML / stabilisation"),
+        2: (10, 75, "Stabilisation"),
+        3: (12, 75, "Stockage"),
+        4: (12, 75, "Stockage"),
+        5: (13, 75, "Stockage"),
+        6: (14, 75, "Été"),
+        7: (16, 75, "Été"),
+        8: (16, 75, "Été"),
+        9: (13, 75, "Refroidissement FA"),
+        10: (10, 75, "FA / FML"),
+        11: (8, 75, "Refroidissement FA"),
+        12: (8, 75, "FML"),
+    }
 
+    total_volume = length_m * width_m * height_m
     default_zone_volume = total_volume / zone_count
     zone_length = length_m / zone_count
 
     zones = []
 
     for i in range(zone_count):
-        zones.append(
-            Zone(
-                cave_id=cave.id,
-                name=f"Zone {i + 1}",
-                volume_m3=default_zone_volume,
-                target_temp_winter_c=12,
-                target_temp_summer_c=16,
-                target_humidity_percent=75,
-                process_cooling_kwh=0,
-                process_heating_kwh=0,
-                x_m=i * zone_length,
-                y_m=0,
-                width_m=width_m,
-                length_m=zone_length,
-                process_heating_start_month=1,
-                process_heating_end_month=12,
-                process_cooling_start_month=1,
-                process_cooling_end_month=12,
-            )
+        zone = Zone(
+            cave_id=cave.id,
+            name=f"Zone {i + 1}",
+            volume_m3=default_zone_volume,
+            target_temp_winter_c=12,
+            target_temp_summer_c=16,
+            target_humidity_percent=75,
+            process_cooling_kwh=0,
+            process_heating_kwh=0,
+            x_m=i * zone_length,
+            y_m=0,
+            width_m=width_m,
+            length_m=zone_length,
+            process_heating_start_month=1,
+            process_heating_end_month=12,
+            process_cooling_start_month=1,
+            process_cooling_end_month=12,
         )
 
-    db.add_all(zones)
+        db.add(zone)
+        db.flush()
+
+        for month, values in default_monthly_profile.items():
+            temp, humidity, phase = values
+
+            db.add(
+                ZoneMonthlyTarget(
+                    zone_id=zone.id,
+                    month=month,
+                    target_temp_c=temp,
+                    target_humidity_percent=humidity,
+                    phase=phase,
+                )
+            )
+
+        zones.append(zone)
 
     print(f"Cave créée avec {len(zones)} zone(s)")
 
@@ -1190,4 +1211,103 @@ def export_for_nrcave(
     return Response(
         content=json.dumps(payload, indent=2, ensure_ascii=False),
         media_type="application/json",
+    )
+
+@router.get("/caves/{cave_id}/monthly-targets")
+def monthly_targets_form(
+    cave_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+
+    months = [
+        (1, "Jan"),
+        (2, "Fév"),
+        (3, "Mar"),
+        (4, "Avr"),
+        (5, "Mai"),
+        (6, "Juin"),
+        (7, "Juil"),
+        (8, "Août"),
+        (9, "Sep"),
+        (10, "Oct"),
+        (11, "Nov"),
+        (12, "Déc"),
+    ]
+
+    for zone in cave.zones:
+        existing_months = {
+            target.month for target in zone.monthly_targets
+        }
+
+        for month_number, _ in months:
+            if month_number not in existing_months:
+                fallback_temp = (
+                    zone.target_temp_winter_c
+                    if month_number in [1, 2, 3, 11, 12]
+                    else zone.target_temp_summer_c
+                )
+
+                db.add(
+                    ZoneMonthlyTarget(
+                        zone_id=zone.id,
+                        month=month_number,
+                        target_temp_c=fallback_temp,
+                        target_humidity_percent=zone.target_humidity_percent or 75,
+                        phase="standard",
+                    )
+                )
+
+    db.commit()
+    db.refresh(cave)
+
+    return render_template(
+        request,
+        "monthly_targets.html",
+        {
+            "cave": cave,
+            "months": months,
+        },
+    )
+
+
+@router.post("/caves/{cave_id}/monthly-targets")
+async def monthly_targets_submit(
+    cave_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+    form = await request.form()
+
+    for zone in cave.zones:
+        for month in range(1, 13):
+            temp_key = f"temp_{zone.id}_{month}"
+            humidity_key = f"humidity_{zone.id}_{month}"
+            phase_key = f"phase_{zone.id}_{month}"
+
+            target = db.query(ZoneMonthlyTarget).filter(
+                ZoneMonthlyTarget.zone_id == zone.id,
+                ZoneMonthlyTarget.month == month,
+            ).first()
+
+            if not target:
+                target = ZoneMonthlyTarget(
+                    zone_id=zone.id,
+                    month=month,
+                )
+                db.add(target)
+
+            target.target_temp_c = float(str(form.get(temp_key, 12)).replace(",", "."))
+            target.target_humidity_percent = float(str(form.get(humidity_key, 75)).replace(",", "."))
+            target.phase = str(form.get(phase_key, "standard"))
+
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/caves/{cave.id}",
+        status_code=303,
     )

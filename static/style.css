@@ -363,3 +363,29 @@ canvas {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+
+.table-scroll {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.monthly-target-table {
+  min-width: 1400px;
+}
+
+.monthly-target-table th,
+.monthly-target-table td {
+  vertical-align: top;
+}
+
+.mini-label {
+  font-size: 0.75rem;
+  margin-top: 0.3rem;
+  color: #666;
+}
+
+.mini-input {
+  width: 100%;
+  padding: 0.25rem;
+  font-size: 0.85rem;
+}

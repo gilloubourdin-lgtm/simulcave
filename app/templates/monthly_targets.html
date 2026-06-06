@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Températures mensuelles — {{ cave.name }}</h2>
+
+<p class="help-text">
+Définissez les températures cibles et l’humidité cible pour chaque zone et chaque mois.
+</p>
+
+<form method="post">
+
+  <div class="table-scroll">
+    <table class="monthly-target-table">
+      <thead>
+        <tr>
+          <th>Zone</th>
+          {% for month_number, month_name in months %}
+            <th>{{ month_name }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for zone in cave.zones %}
+        <tr>
+          <td><strong>{{ zone.name }}</strong><br>{{ zone.volume_m3|round(1) }} m³</td>
+
+          {% for month_number, month_name in months %}
+            {% set target = zone.monthly_targets|selectattr("month", "equalto", month_number)|first %}
+
+            <td>
+              <label class="mini-label">°C</label>
+              <input
+                class="mini-input"
+                type="number"
+                step="0.1"
+                name="temp_{{ zone.id }}_{{ month_number }}"
+                value="{{ target.target_temp_c if target else 12 }}"
+                required
+              >
+
+              <label class="mini-label">HR %</label>
+              <input
+                class="mini-input"
+                type="number"
+                step="0.1"
+                name="humidity_{{ zone.id }}_{{ month_number }}"
+                value="{{ target.target_humidity_percent if target else 75 }}"
+                required
+              >
+
+              <label class="mini-label">Phase</label>
+              <input
+                class="mini-input"
+                type="text"
+                name="phase_{{ zone.id }}_{{ month_number }}"
+                value="{{ target.phase if target else 'standard' }}"
+              >
+            </td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <button type="submit">Enregistrer les profils mensuels</button>
+
+</form>
+
+<p>
+  <a class="button" href="/caves/{{ cave.id }}">Retour à la cave</a>
+</p>
+
+{% endblock %}
