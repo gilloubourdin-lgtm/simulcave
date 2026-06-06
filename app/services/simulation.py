@@ -138,6 +138,13 @@ def condensation_risk_level(
         return "moyen"
     return "faible"
 
+def get_zone_monthly_target(zone, month_number: int):
+    for target in getattr(zone, "monthly_targets", []):
+        if target.month == month_number:
+            return target
+
+    return None
+
 def simulate_cave(cave) -> SimulationResult:
     weather = get_weather_for_cave(cave)
     monthly_temps = weather["temps"]
@@ -208,8 +215,21 @@ def simulate_cave(cave) -> SimulationResult:
                     (zone.process_cooling_kwh or 0) / cooling_months
                 )
 
-            target_heating = zone.target_temp_winter_c
-            target_cooling = zone.target_temp_summer_c
+            monthly_target = get_zone_monthly_target(zone, month_number)
+
+            if monthly_target:
+                target_temp = monthly_target.target_temp_c
+                target_humidity = monthly_target.target_humidity_percent or zone.target_humidity_percent or 75
+            else:
+                if month_number in [1, 2, 3, 11, 12]:
+                    target_temp = zone.target_temp_winter_c
+                else:
+                    target_temp = zone.target_temp_summer_c
+
+                target_humidity = zone.target_humidity_percent or 75
+
+            target_heating = target_temp
+            target_cooling = target_temp
 
             if getattr(cave, "ventilation_enabled", True):
                 zone_volume = zone.volume_m3 or (total_volume * zone_ratio)
@@ -299,10 +319,19 @@ def simulate_cave(cave) -> SimulationResult:
         else:
             effective_temp = outdoor_temp
 
-        base_humidity_values = [
-            getattr(zone, "target_humidity_percent", 75) or 75
-            for zone in cave.zones
-        ]
+        base_humidity_values = []
+
+        for zone in cave.zones:
+            monthly_target = get_zone_monthly_target(zone, month_number)
+
+            if monthly_target:
+                base_humidity_values.append(
+                    monthly_target.target_humidity_percent or 75
+                )
+            else:
+                base_humidity_values.append(
+                    getattr(zone, "target_humidity_percent", 75) or 75
+                )
 
         base_humidity = (
             sum(base_humidity_values) / len(base_humidity_values)
