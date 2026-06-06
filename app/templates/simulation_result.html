@@ -198,8 +198,8 @@ document.querySelectorAll(".heatmap-grid").forEach(grid => {
   <li>Si la météo dynamique n’est pas disponible, la région climatique de secours est utilisée.</li>
   <li>Température effective = température extérieure, température sol ou mix des deux selon le type de paroi et le facteur d’enterrement.</li>
   <li>Formule enveloppe : Q = U × A × ΔT × heures.</li>
-  <li>Les besoins process chaud/froid sont répartis uniquement sur les mois sélectionnés pour chaque zone.</li>
-  <li>Les besoins affichés mensuellement incluent enveloppe + process.</li>
+  <li>Les besoins process vinicoles ne sont pas comptabilisés dans SimulCave afin d’éviter un double comptage avec NRCave.</li>
+  <li>Les besoins affichés mensuellement incluent uniquement enveloppe + ventilation.</li>
   <li>Les parois sont corrigées par le facteur d’inertie du matériau.</li>
   <li>Température moyenne du sol utilisée : {{ result.soil_temperature_c }} °C.</li>
   <li>Prix énergie : {{ cave.energy_price_chf_per_kwh }} CHF/kWh.</li>
