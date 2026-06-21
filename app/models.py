@@ -96,6 +96,10 @@ class Zone(Base):
     width_m = Column(Float, default=1)
     length_m = Column(Float, default=1)
 
+    level_index = Column(Integer, default=0)
+    level_name = Column(String, default="Rez")
+    floor_depth_m = Column(Float, default=0.0)
+
     target_temp_winter_c = Column(Float, nullable=False)
     target_temp_summer_c = Column(Float, nullable=False)
     target_humidity_percent = Column(Float, nullable=True)

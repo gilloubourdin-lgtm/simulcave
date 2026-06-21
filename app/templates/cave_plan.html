@@ -14,6 +14,10 @@
   <button onclick="resetZoom()">Réinitialiser</button>
   <button onclick="setThermalMode('winter')">Temp. hiver</button>
   <button onclick="setThermalMode('summer')">Temp. été</button>
+  <button type="button" onclick="filterLevel('all')">Tous</button>
+  <button type="button" onclick="filterLevel('-1')">Sous-sol</button>
+  <button type="button" onclick="filterLevel('0')">Rez</button>
+  <button type="button" onclick="filterLevel('1')">Étage</button>
 </div>
 
 <div class="thermal-legend">
@@ -63,39 +67,42 @@
       </text>
 
       {% for zone in cave.zones %}
-      <rect
-        class="thermal-zone"
-        data-winter="{{ zone.target_temp_winter_c }}"
-        data-summer="{{ zone.target_temp_summer_c }}"
-        x="{{ 40 + zone.x_m * scale }}"
-        y="{{ 40 + zone.y_m * scale }}"
-        width="{{ zone.length_m * scale }}"
-        height="{{ zone.width_m * scale }}"
-        fill="#dbeafe"
-        stroke="#1e3a8a"
-        stroke-width="2"
-        rx="6"
-      />
+      <g class="plan-zone-group"
+        data-level="{{ zone.level_index or 0 }}">
+        <rect
+          class="thermal-zone"
+          data-winter="{{ zone.target_temp_winter_c }}"
+          data-summer="{{ zone.target_temp_summer_c }}"
+          x="{{ 40 + zone.x_m * scale }}"
+          y="{{ 40 + zone.y_m * scale }}"
+          width="{{ zone.length_m * scale }}"
+          height="{{ zone.width_m * scale }}"
+          fill="#dbeafe"
+          stroke="#1e3a8a"
+          stroke-width="2"
+          rx="6"
+        />
 
-      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 80 + zone.y_m * scale }}" class="plan-zone-title">
-        {{ zone.name }}
-      </text>
+        <text x="{{ 55 + zone.x_m * scale }}" y="{{ 80 + zone.y_m * scale }}" class="plan-zone-title">
+          {{ zone.name }}
+        </text>
 
-      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 115 + zone.y_m * scale }}" class="plan-zone-text">
-        Hiver : {{ zone.target_temp_winter_c }} °C
-      </text>
+        <text x="{{ 55 + zone.x_m * scale }}" y="{{ 115 + zone.y_m * scale }}" class="plan-zone-text">
+          Hiver : {{ zone.target_temp_winter_c }} °C
+        </text>
 
-      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 145 + zone.y_m * scale }}" class="plan-zone-text">
-        Été : {{ zone.target_temp_summer_c }} °C
-      </text>
+        <text x="{{ 55 + zone.x_m * scale }}" y="{{ 145 + zone.y_m * scale }}" class="plan-zone-text">
+          Été : {{ zone.target_temp_summer_c }} °C
+        </text>
 
-      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 175 + zone.y_m * scale }}" class="plan-zone-text">
-        HR : {{ zone.target_humidity_percent }} %
-      </text>
+        <text x="{{ 55 + zone.x_m * scale }}" y="{{ 175 + zone.y_m * scale }}" class="plan-zone-text">
+          HR : {{ zone.target_humidity_percent }} %
+        </text>
 
-      <text x="{{ 55 + zone.x_m * scale }}" y="{{ 205 + zone.y_m * scale }}" class="plan-zone-text">
-        {{ zone.length_m|round(1) }} × {{ zone.width_m|round(1) }} m
-      </text>
+        <text x="{{ 55 + zone.x_m * scale }}" y="{{ 205 + zone.y_m * scale }}" class="plan-zone-text">
+          {{ zone.length_m|round(1) }} × {{ zone.width_m|round(1) }} m
+        </text>
+      </g>
       {% endfor %}
     </svg>
   </div>
@@ -131,6 +138,16 @@ function setThermalMode(mode) {
   zones.forEach(zone => {
     const temp = parseFloat(zone.dataset[mode]);
     zone.setAttribute("fill", temperatureToColor(temp));
+  });
+}
+
+function filterLevel(level) {
+  document.querySelectorAll(".plan-zone-group").forEach(group => {
+    if (level === "all" || group.dataset.level === level) {
+      group.style.display = "";
+    } else {
+      group.style.display = "none";
+    }
   });
 }
 

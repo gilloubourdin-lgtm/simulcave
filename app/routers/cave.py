@@ -456,6 +456,9 @@ def update_zone(
     process_cooling_end_month: int = Form(12),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
+    level_index: int = Form(0),
+    level_name: str = Form("Rez"),
+    floor_depth_m: float = Form(0),
 ):
     zone = db.query(Zone).join(Cave).filter(
         Zone.id == zone_id,
@@ -480,6 +483,9 @@ def update_zone(
     zone.process_heating_end_month = process_heating_end_month
     zone.process_cooling_start_month = process_cooling_start_month
     zone.process_cooling_end_month = process_cooling_end_month
+    zone.level_index = level_index
+    zone.level_name = level_name
+    zone.floor_depth_m = floor_depth_m
 
     cave_id = zone.cave_id
     db.commit()

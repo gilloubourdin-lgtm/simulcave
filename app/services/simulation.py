@@ -145,6 +145,22 @@ def get_zone_monthly_target(zone, month_number: int):
 
     return None
 
+def zone_buried_factor(cave, zone) -> float:
+    """
+    Ajuste le facteur d’enterrement selon le niveau de la zone.
+    """
+    cave_factor = getattr(cave, "buried_factor", 0.0) or 0.0
+    level_index = getattr(zone, "level_index", 0) or 0
+    depth = getattr(zone, "floor_depth_m", 0.0) or 0.0
+
+    if level_index < 0:
+        return min(1.0, max(cave_factor, 0.7 + depth * 0.1))
+
+    if level_index == 0:
+        return cave_factor
+
+    return 0.0
+
 def simulate_cave(cave) -> SimulationResult:
     weather = get_weather_for_cave(cave)
     monthly_temps = weather["temps"]
@@ -258,7 +274,7 @@ def simulate_cave(cave) -> SimulationResult:
                     wall=wall,
                     outdoor_temp=outdoor_temp,
                     soil_temp=soil_temp,
-                    buried_factor=cave.buried_factor,
+                    buried_factor=zone_buried_factor(cave, zone),
                 )
 
                 effective_temperatures.append(wall_temp)
@@ -431,8 +447,8 @@ def simulate_cave(cave) -> SimulationResult:
         monthly_results=monthly_results,
         heating_kwh=round(total_envelope_heating, 1),
         cooling_kwh=round(total_envelope_cooling, 1),
-        process_heating_kwh=round(total_process_heating, 1),
-        process_cooling_kwh=round(total_process_cooling, 1),
+        process_heating_kwh=0,
+        process_cooling_kwh=0,
         ventilation_heating_kwh=round(total_ventilation_heating, 1),
         ventilation_cooling_kwh=round(total_ventilation_cooling, 1),
         total_heating_kwh=round(total_heating, 1),
