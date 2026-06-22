@@ -178,6 +178,10 @@ Couleur plus foncée = besoin énergétique mensuel plus élevé.
     </ol>
 </div>
 {% endif %}
+
+<h3>Répartition énergétique par zone</h3>
+<canvas id="zoneChart" height="120"></canvas>
+
 {% set top_zone = result.zone_results[0] if result.zone_results else None %}
 
 {% if top_zone %}
@@ -355,6 +359,33 @@ const wallCooling = [
     {{ wall.cooling_kwh }}{% if not loop.last %},{% endif %}
   {% endfor %}
 ];
+
+const zoneLabels = [
+  {% for zone in result.zone_results %}
+    "{{ zone.zone_name }}"{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+const zoneEnergy = [
+  {% for zone in result.zone_results %}
+    {{ zone.total_kwh }}{% if not loop.last %},{% endif %}
+  {% endfor %}
+];
+
+if (document.getElementById('zoneChart') && zoneEnergy.length > 0) {
+  new Chart(document.getElementById('zoneChart'), {
+    type: 'pie',
+    data: {
+      labels: zoneLabels,
+      datasets: [
+        {
+          label: 'Énergie par zone [kWh/an]',
+          data: zoneEnergy
+        }
+      ]
+    }
+  });
+}
 
 new Chart(document.getElementById('wallChart'), {
   type: 'bar',
