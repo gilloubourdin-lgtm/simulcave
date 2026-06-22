@@ -181,6 +181,18 @@ Couleur plus foncée = besoin énergétique mensuel plus élevé.
 
 <h3>Répartition énergétique par zone</h3>
 <canvas id="zoneChart" height="120"></canvas>
+<h3>Répartition des besoins énergétiques</h3>
+<canvas id="lossChart" height="120"></canvas>
+
+<div class="info-box">
+  <strong>Analyse énergétique</strong><br>
+
+  <ul>
+    <li>Enveloppe : {{ result.envelope_energy_kwh }} kWh/an</li>
+    <li>Ventilation : {{ result.ventilation_energy_kwh }} kWh/an</li>
+    <li>Humidité : {{ result.humidity_energy_kwh }} kWh/an</li>
+  </ul>
+</div>
 
 {% set top_zone = result.zone_results[0] if result.zone_results else None %}
 
@@ -383,6 +395,30 @@ if (document.getElementById('zoneChart') && zoneEnergy.length > 0) {
           data: zoneEnergy
         }
       ]
+    }
+  });
+}
+
+const lossLabels = [
+  "Enveloppe",
+  "Ventilation",
+  "Humidité"
+];
+
+const lossData = [
+  {{ result.envelope_energy_kwh }},
+  {{ result.ventilation_energy_kwh }},
+  {{ result.humidity_energy_kwh }}
+];
+
+if (document.getElementById('lossChart')) {
+  new Chart(document.getElementById('lossChart'), {
+    type: 'doughnut',
+    data: {
+      labels: lossLabels,
+      datasets: [{
+        data: lossData
+      }]
     }
   });
 }

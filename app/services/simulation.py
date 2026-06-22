@@ -58,6 +58,9 @@ class SimulationResult:
     ventilation_cooling_kwh: float
     humidification_kwh: float
     dehumidification_kwh: float
+    envelope_energy_kwh: float
+    ventilation_energy_kwh: float
+    humidity_energy_kwh: float
 
     total_heating_kwh: float
     total_cooling_kwh: float
@@ -498,4 +501,18 @@ def simulate_cave(cave) -> SimulationResult:
         soil_temperature_c=round(soil_temp, 1),
         wall_results=wall_results,
         zone_results=zone_results,
+        envelope_energy_kwh=round(
+    total_envelope_heating + total_envelope_cooling,
+        1,
+    ),
+
+    ventilation_energy_kwh=round(
+        total_ventilation_heating + total_ventilation_cooling,
+        1,
+    ),
+
+    humidity_energy_kwh=round(
+        total_humidification + total_dehumidification,
+        1,
+    ),
     )
