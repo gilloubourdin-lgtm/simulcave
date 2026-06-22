@@ -693,10 +693,15 @@ def cave_plan(
 ):
     cave = get_user_cave(db, cave_id, current_user)
 
+    result = simulate_cave(cave)
+
     return render_template(
         request,
         "cave_plan.html",
-        {"cave": cave},
+        {
+            "cave": cave,
+            "result": result,
+        },
     )
 
 @router.get("/caves/{cave_id}/parameters")

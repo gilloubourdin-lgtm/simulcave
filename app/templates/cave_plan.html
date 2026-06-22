@@ -14,6 +14,7 @@
   <button onclick="resetZoom()">Réinitialiser</button>
   <button onclick="setThermalMode('winter')">Temp. hiver</button>
   <button onclick="setThermalMode('summer')">Temp. été</button>
+  <button type="button" onclick="setEnergyMode()">Énergie</button>
   <button type="button" onclick="filterLevel('all')">Tous</button>
   <button type="button" onclick="filterLevel('-1')">Sous-sol</button>
   <button type="button" onclick="filterLevel('0')">Rez</button>
@@ -35,6 +36,11 @@
       xmlns="http://www.w3.org/2000/svg"
     >
       {% set scale = 40 %}
+
+      {% set zone_energy = {} %}
+      {% for zr in result.zone_results %}
+        {% set _ = zone_energy.update({zr.zone_id: zr.total_kwh}) %}
+      {% endfor %}
 
       <rect
         x="40"
@@ -73,11 +79,13 @@
           class="thermal-zone"
           data-winter="{{ zone.target_temp_winter_c }}"
           data-summer="{{ zone.target_temp_summer_c }}"
+          data-energy="{{ zone_energy.get(zone.id, 0) }}"
           x="{{ 40 + zone.x_m * scale }}"
           y="{{ 40 + zone.y_m * scale }}"
           width="{{ zone.length_m * scale }}"
           height="{{ zone.width_m * scale }}"
           fill="#dbeafe"
+
           stroke="#1e3a8a"
           stroke-width="2"
           rx="6"
@@ -150,7 +158,32 @@ function filterLevel(level) {
     }
   });
 }
+function energyToColor(value, maxValue) {
+  if (maxValue <= 0) return "#e5e7eb";
 
+  const intensity = value / maxValue;
+
+  if (intensity < 0.2) return "#dbeafe";
+  if (intensity < 0.4) return "#93c5fd";
+  if (intensity < 0.6) return "#facc15";
+  if (intensity < 0.8) return "#fb923c";
+  return "#dc2626";
+}
+
+function setEnergyMode() {
+  const zones = document.querySelectorAll(".thermal-zone");
+
+  const values = Array.from(zones).map(zone =>
+    parseFloat(zone.dataset.energy || "0")
+  );
+
+  const maxValue = Math.max(...values, 1);
+
+  zones.forEach(zone => {
+    const value = parseFloat(zone.dataset.energy || "0");
+    zone.setAttribute("fill", energyToColor(value, maxValue));
+  });
+}
 setThermalMode("winter");
 </script>
 

@@ -37,6 +37,7 @@ class WallResult:
 
 @dataclass
 class ZoneResult:
+    zone_id: int
     zone_name: str
     level_name: str
     heating_kwh: float
@@ -461,6 +462,7 @@ def simulate_cave(cave) -> SimulationResult:
         zone_results.append(
             ZoneResult(
                 zone_name=zone.name,
+                zone_id=zone.id,
                 level_name=zone.level_name or "Rez",
                 heating_kwh=round(heating, 1),
                 cooling_kwh=round(cooling, 1),
