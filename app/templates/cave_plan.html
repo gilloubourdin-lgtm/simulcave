@@ -27,6 +27,12 @@
   <span>Chaud</span>
 </div>
 
+<div class="thermal-legend">
+  <span>Faible énergie</span>
+  <div class="energy-gradient"></div>
+  <span>Zone énergivore</span>
+</div>
+
 <div class="plan-scroll">
   <div id="planZoom">
     <svg
@@ -109,6 +115,10 @@
 
         <text x="{{ 55 + zone.x_m * scale }}" y="{{ 205 + zone.y_m * scale }}" class="plan-zone-text">
           {{ zone.length_m|round(1) }} × {{ zone.width_m|round(1) }} m
+        </text>
+
+        <text x="{{ 55 + zone.x_m * scale }}" y="{{ 235 + zone.y_m * scale }}" class="plan-zone-text">
+          Énergie : {{ zone_energy.get(zone.id, 0)|round(0) }} kWh/an
         </text>
       </g>
       {% endfor %}

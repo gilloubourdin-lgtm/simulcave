@@ -413,3 +413,18 @@ canvas {
   font-weight: bold;
   border-radius: 4px;
 }
+
+.energy-gradient {
+  width: 260px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid #ddd;
+  background: linear-gradient(
+    90deg,
+    #dbeafe,
+    #93c5fd,
+    #facc15,
+    #fb923c,
+    #dc2626
+  );
+}
