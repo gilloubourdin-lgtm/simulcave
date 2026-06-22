@@ -70,6 +70,7 @@ class SimulationResult:
     soil_temperature_c: float
 
     wall_results: list[WallResult]
+    zone_results: list[ZoneResult]
 
 
 def cave_volume(cave) -> float:
