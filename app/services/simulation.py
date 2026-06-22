@@ -1,5 +1,8 @@
+# app/services/simulation.py
+
 from dataclasses import dataclass
 import math
+
 from app.services.weather import MONTHS, HOURS_PER_MONTH, get_weather_for_cave
 
 
@@ -15,8 +18,12 @@ class MonthlyResult:
     dew_point_c: float
     condensation_risk: str
     relative_humidity_percent: float
+    humidity_target_percent: float
+    humidity_gap_percent: float
     humidity_risk_index: float
     humidity_stability_label: str
+    humidification_kwh: float
+    dehumidification_kwh: float
 
 
 @dataclass
@@ -39,6 +46,8 @@ class SimulationResult:
     process_cooling_kwh: float
     ventilation_heating_kwh: float
     ventilation_cooling_kwh: float
+    humidification_kwh: float
+    dehumidification_kwh: float
 
     total_heating_kwh: float
     total_cooling_kwh: float
@@ -65,8 +74,7 @@ def calculate_transmission_kwh(
     delta_t: float,
     hours: float,
 ) -> float:
-    wh = u_value * area_m2 * delta_t * hours
-    return wh / 1000
+    return u_value * area_m2 * delta_t * hours / 1000
 
 
 def calculate_ventilation_load_kwh(
@@ -81,18 +89,20 @@ def calculate_ventilation_load_kwh(
     return 0.34 * airflow_m3_h * delta_t * hours / 1000
 
 
-def month_is_active(month_number: int, start_month: int, end_month: int) -> bool:
-    if start_month <= end_month:
-        return start_month <= month_number <= end_month
+def calculate_humidity_energy_kwh(
+    volume_m3: float,
+    humidity_gap_percent: float,
+) -> tuple[float, float]:
+    humidification_kwh = 0.0
+    dehumidification_kwh = 0.0
 
-    return month_number >= start_month or month_number <= end_month
+    if humidity_gap_percent > 0:
+        humidification_kwh = humidity_gap_percent * volume_m3 * 0.01
 
+    if humidity_gap_percent < 0:
+        dehumidification_kwh = abs(humidity_gap_percent) * volume_m3 * 0.015
 
-def active_month_count(start_month: int, end_month: int) -> int:
-    return sum(
-        1 for month in range(1, 13)
-        if month_is_active(month, start_month, end_month)
-    )
+    return humidification_kwh, dehumidification_kwh
 
 
 def wall_external_temperature(
@@ -111,10 +121,8 @@ def wall_external_temperature(
 
     return outdoor_temp * (1 - buried_factor) + soil_temp * buried_factor
 
+
 def dew_point_c(temperature_c: float, relative_humidity_pct: float) -> float:
-    """
-    Calcule le point de rosée en °C avec la formule de Magnus.
-    """
     rh = max(1, min(relative_humidity_pct, 100)) / 100
     a = 17.62
     b = 243.12
@@ -127,9 +135,6 @@ def condensation_risk_level(
     surface_temp_c: float,
     dew_point_temp_c: float,
 ) -> str:
-    """
-    Évalue le risque de condensation.
-    """
     margin = surface_temp_c - dew_point_temp_c
 
     if margin <= 0:
@@ -138,6 +143,7 @@ def condensation_risk_level(
         return "moyen"
     return "faible"
 
+
 def get_zone_monthly_target(zone, month_number: int):
     for target in getattr(zone, "monthly_targets", []):
         if target.month == month_number:
@@ -145,10 +151,8 @@ def get_zone_monthly_target(zone, month_number: int):
 
     return None
 
+
 def zone_buried_factor(cave, zone) -> float:
-    """
-    Ajuste le facteur d’enterrement selon le niveau de la zone.
-    """
     cave_factor = getattr(cave, "buried_factor", 0.0) or 0.0
     level_index = getattr(zone, "level_index", 0) or 0
     depth = getattr(zone, "floor_depth_m", 0.0) or 0.0
@@ -160,6 +164,7 @@ def zone_buried_factor(cave, zone) -> float:
         return cave_factor
 
     return 0.0
+
 
 def simulate_cave(cave) -> SimulationResult:
     weather = get_weather_for_cave(cave)
@@ -173,10 +178,10 @@ def simulate_cave(cave) -> SimulationResult:
 
     total_envelope_heating = 0
     total_envelope_cooling = 0
-    total_process_heating = 0
-    total_process_cooling = 0
     total_ventilation_heating = 0
     total_ventilation_cooling = 0
+    total_humidification = 0
+    total_dehumidification = 0
 
     total_volume = cave_volume(cave)
 
@@ -195,47 +200,27 @@ def simulate_cave(cave) -> SimulationResult:
 
         month_envelope_heating = 0
         month_envelope_cooling = 0
-        month_process_heating = 0
-        month_process_cooling = 0
         month_ventilation_heating = 0
         month_ventilation_cooling = 0
+        month_humidification = 0
+        month_dehumidification = 0
 
         effective_temperatures = []
+        humidity_target_values = []
 
         for zone in cave.zones:
             zone_ratio = zone.volume_m3 / total_volume
-
-            heating_start = getattr(zone, "process_heating_start_month", 1) or 1
-            heating_end = getattr(zone, "process_heating_end_month", 12) or 12
-            cooling_start = getattr(zone, "process_cooling_start_month", 1) or 1
-            cooling_end = getattr(zone, "process_cooling_end_month", 12) or 12
-
-            heating_months = active_month_count(heating_start, heating_end)
-            cooling_months = active_month_count(cooling_start, cooling_end)
-
-            if heating_months > 0 and month_is_active(
-                month_number,
-                heating_start,
-                heating_end,
-            ):
-                month_process_heating += (
-                    (zone.process_heating_kwh or 0) / heating_months
-                )
-
-            if cooling_months > 0 and month_is_active(
-                month_number,
-                cooling_start,
-                cooling_end,
-            ):
-                month_process_cooling += (
-                    (zone.process_cooling_kwh or 0) / cooling_months
-                )
+            zone_volume = zone.volume_m3 or (total_volume * zone_ratio)
 
             monthly_target = get_zone_monthly_target(zone, month_number)
 
             if monthly_target:
                 target_temp = monthly_target.target_temp_c
-                target_humidity = monthly_target.target_humidity_percent or zone.target_humidity_percent or 75
+                target_humidity = (
+                    monthly_target.target_humidity_percent
+                    or zone.target_humidity_percent
+                    or 75
+                )
             else:
                 if month_number in [1, 2, 3, 11, 12]:
                     target_temp = zone.target_temp_winter_c
@@ -244,27 +229,25 @@ def simulate_cave(cave) -> SimulationResult:
 
                 target_humidity = zone.target_humidity_percent or 75
 
-            target_heating = target_temp
-            target_cooling = target_temp
+            humidity_target_values.append(target_humidity)
 
             if getattr(cave, "ventilation_enabled", True):
-                zone_volume = zone.volume_m3 or (total_volume * zone_ratio)
                 ach = getattr(cave, "ventilation_rate_ach", 0.2) or 0.2
 
-                if outdoor_temp < target_heating:
+                if outdoor_temp < target_temp:
                     month_ventilation_heating += calculate_ventilation_load_kwh(
                         volume_m3=zone_volume,
                         air_changes_per_hour=ach,
-                        indoor_temp_c=target_heating,
+                        indoor_temp_c=target_temp,
                         outdoor_temp_c=outdoor_temp,
                         hours=hours,
                     )
 
-                elif outdoor_temp > target_cooling:
+                elif outdoor_temp > target_temp:
                     month_ventilation_cooling += calculate_ventilation_load_kwh(
                         volume_m3=zone_volume,
                         air_changes_per_hour=ach,
-                        indoor_temp_c=target_cooling,
+                        indoor_temp_c=target_temp,
                         outdoor_temp_c=outdoor_temp,
                         hours=hours,
                     )
@@ -279,8 +262,8 @@ def simulate_cave(cave) -> SimulationResult:
 
                 effective_temperatures.append(wall_temp)
 
-                delta_heating = max(target_heating - wall_temp, 0)
-                delta_cooling = max(wall_temp - target_cooling, 0)
+                delta_heating = max(target_temp - wall_temp, 0)
+                delta_cooling = max(wall_temp - target_temp, 0)
 
                 effective_area = wall.area_m2 * zone_ratio
                 inertia_factor = getattr(wall, "inertia_factor", 1.0) or 1.0
@@ -311,63 +294,35 @@ def simulate_cave(cave) -> SimulationResult:
                 wall_totals[wall.id]["heating"] += wall_heating
                 wall_totals[wall.id]["cooling"] += wall_cooling
 
-        month_total_heating = (
-            month_envelope_heating
-            + month_process_heating
-            + month_ventilation_heating
-        )
-
-        month_total_cooling = (
-            month_envelope_cooling
-            + month_process_cooling
-            + month_ventilation_cooling
-        )
-
-        total_envelope_heating += month_envelope_heating
-        total_envelope_cooling += month_envelope_cooling
-        total_process_heating += month_process_heating
-        total_process_cooling += month_process_cooling
-        total_ventilation_heating += month_ventilation_heating
-        total_ventilation_cooling += month_ventilation_cooling
-
         if effective_temperatures:
             effective_temp = sum(effective_temperatures) / len(effective_temperatures)
         else:
             effective_temp = outdoor_temp
 
-        base_humidity_values = []
-
-        for zone in cave.zones:
-            monthly_target = get_zone_monthly_target(zone, month_number)
-
-            if monthly_target:
-                base_humidity_values.append(
-                    monthly_target.target_humidity_percent or 75
-                )
-            else:
-                base_humidity_values.append(
-                    getattr(zone, "target_humidity_percent", 75) or 75
-                )
-
-        base_humidity = (
-            sum(base_humidity_values) / len(base_humidity_values)
-            if base_humidity_values
+        humidity_target = (
+            sum(humidity_target_values) / len(humidity_target_values)
+            if humidity_target_values
             else 75
         )
 
-        avg_humidity = (
-            base_humidity
-            - ((effective_temp - 12.0) * 1.8)
-        )
+        relative_humidity = humidity_target - ((effective_temp - 12.0) * 1.8)
+        relative_humidity = max(55.0, min(95.0, relative_humidity))
 
-        avg_humidity = max(55.0, min(95.0, avg_humidity))
+        humidity_gap = humidity_target - relative_humidity
+
+        month_humidification, month_dehumidification = (
+            calculate_humidity_energy_kwh(
+                volume_m3=total_volume,
+                humidity_gap_percent=humidity_gap,
+            )
+        )
 
         humidity_risk_index = 0.0
 
-        if avg_humidity < 65:
+        if relative_humidity < 65:
             humidity_risk_index += 0.6
 
-        if avg_humidity > 90:
+        if relative_humidity > 90:
             humidity_risk_index += 0.5
 
         if effective_temp > 18:
@@ -384,13 +339,30 @@ def simulate_cave(cave) -> SimulationResult:
 
         dew_point = dew_point_c(
             temperature_c=effective_temp,
-            relative_humidity_pct=avg_humidity,
+            relative_humidity_pct=relative_humidity,
         )
 
         condensation_risk = condensation_risk_level(
             surface_temp_c=effective_temp,
             dew_point_temp_c=dew_point,
         )
+
+        month_total_heating = (
+            month_envelope_heating
+            + month_ventilation_heating
+        )
+
+        month_total_cooling = (
+            month_envelope_cooling
+            + month_ventilation_cooling
+        )
+
+        total_envelope_heating += month_envelope_heating
+        total_envelope_cooling += month_envelope_cooling
+        total_ventilation_heating += month_ventilation_heating
+        total_ventilation_cooling += month_ventilation_cooling
+        total_humidification += month_humidification
+        total_dehumidification += month_dehumidification
 
         monthly_results.append(
             MonthlyResult(
@@ -403,23 +375,25 @@ def simulate_cave(cave) -> SimulationResult:
                 ventilation_cooling_kwh=round(month_ventilation_cooling, 1),
                 dew_point_c=round(dew_point, 1),
                 condensation_risk=condensation_risk,
-                relative_humidity_percent=round(avg_humidity, 1),
+                relative_humidity_percent=round(relative_humidity, 1),
+                humidity_target_percent=round(humidity_target, 1),
+                humidity_gap_percent=round(humidity_gap, 1),
                 humidity_risk_index=round(humidity_risk_index, 3),
                 humidity_stability_label=humidity_stability_label,
+                humidification_kwh=round(month_humidification, 1),
+                dehumidification_kwh=round(month_dehumidification, 1),
             )
         )
 
-    total_heating = (
-        total_envelope_heating
-        + total_ventilation_heating
-    )
+    total_heating = total_envelope_heating + total_ventilation_heating
+    total_cooling = total_envelope_cooling + total_ventilation_cooling
 
-    total_cooling = (
-        total_envelope_cooling
-        + total_ventilation_cooling
+    total_energy = (
+        total_heating
+        + total_cooling
+        + total_humidification
+        + total_dehumidification
     )
-
-    total_energy = total_heating + total_cooling
 
     annual_cost = total_energy * cave.energy_price_chf_per_kwh
     annual_co2_kg = total_energy * cave.co2_factor_kg_per_kwh
@@ -451,6 +425,8 @@ def simulate_cave(cave) -> SimulationResult:
         process_cooling_kwh=0,
         ventilation_heating_kwh=round(total_ventilation_heating, 1),
         ventilation_cooling_kwh=round(total_ventilation_cooling, 1),
+        humidification_kwh=round(total_humidification, 1),
+        dehumidification_kwh=round(total_dehumidification, 1),
         total_heating_kwh=round(total_heating, 1),
         total_cooling_kwh=round(total_cooling, 1),
         total_energy_kwh=round(total_energy, 1),

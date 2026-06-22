@@ -52,6 +52,16 @@
   <div class="kpi important"><h3>Énergie totale</h3><p>{{ result.total_energy_kwh }} kWh/an</p></div>
   <div class="kpi important"><h3>Coût annuel</h3><p>{{ result.annual_cost_chf }} CHF/an</p></div>
   <div class="kpi important"><h3>Émissions CO₂</h3><p>{{ result.annual_co2_tons }} tCO₂/an</p></div>
+
+  <div class="kpi">
+    <h3>Humidification</h3>
+    <p>{{ result.humidification_kwh }} kWh/an</p>
+  </div>
+
+  <div class="kpi">
+    <h3>Déshumidification</h3>
+    <p>{{ result.dehumidification_kwh }} kWh/an</p>
+  </div>
 </div>
 
 <h3>Résultats mensuels</h3>
@@ -66,6 +76,11 @@
       <th>Besoins froid [kWh]</th>
       <th>Ventilation chaud [kWh]</th>
       <th>Ventilation froid [kWh]</th>
+      <th>HR cible [%]</th>
+      <th>HR estimée [%]</th>
+      <th>Écart HR [%]</th>
+      <th>Humidification [kWh]</th>
+      <th>Déshumidification [kWh]</th>
       <th>Point de rosée [°C]</th>
       <th>Risque condensation</th>
     </tr>
@@ -80,6 +95,11 @@
       <td>{{ month.cooling_kwh }}</td>
       <td>{{ month.ventilation_heating_kwh }}</td>
       <td>{{ month.ventilation_cooling_kwh }}</td>
+      <td>{{ month.humidity_target_percent }}</td>
+      <td>{{ month.relative_humidity_percent }}</td>
+      <td>{{ month.humidity_gap_percent }}</td>
+      <td>{{ month.humidification_kwh }}</td>
+      <td>{{ month.dehumidification_kwh }}</td>
       <td>{{ month.dew_point_c }}</td>
       <td>
           {% if month.condensation_risk == "élevé" %}
@@ -133,7 +153,7 @@ Couleur plus foncée = besoin énergétique mensuel plus élevé.
 
 <div class="heatmap-grid">
     {% for month in result.monthly_results %}
-        {% set total_month_kwh = month.heating_kwh + month.cooling_kwh %}
+        {% set total_month_kwh = month.heating_kwh + month.cooling_kwh + month.humidification_kwh + month.dehumidification_kwh %}
         <div class="heatmap-cell"
              data-value="{{ total_month_kwh }}">
             <strong>{{ month.month }}</strong>
@@ -199,7 +219,8 @@ document.querySelectorAll(".heatmap-grid").forEach(grid => {
   <li>Température effective = température extérieure, température sol ou mix des deux selon le type de paroi et le facteur d’enterrement.</li>
   <li>Formule enveloppe : Q = U × A × ΔT × heures.</li>
   <li>Les besoins process vinicoles ne sont pas comptabilisés dans SimulCave afin d’éviter un double comptage avec NRCave.</li>
-  <li>Les besoins affichés mensuellement incluent uniquement enveloppe + ventilation.</li>
+  <li>Les besoins affichés mensuellement incluent enveloppe + ventilation + correction hygrométrique.</li>
+  <li>L’humidification et la déshumidification sont estimées à partir de l’écart entre l’humidité cible et l’humidité relative estimée.</li>
   <li>Les parois sont corrigées par le facteur d’inertie du matériau.</li>
   <li>Température moyenne du sol utilisée : {{ result.soil_temperature_c }} °C.</li>
   <li>Prix énergie : {{ cave.energy_price_chf_per_kwh }} CHF/kWh.</li>
@@ -219,7 +240,9 @@ const monthlyData = [
     outdoor_temp_c: {{ month.outdoor_temp_c }},
     effective_temp_c: {{ month.effective_temp_c }},
     heating_kwh: {{ month.heating_kwh }},
-    cooling_kwh: {{ month.cooling_kwh }}
+    cooling_kwh: {{ month.cooling_kwh }},
+    humidification_kwh: {{ month.humidification_kwh }},
+    dehumidification_kwh: {{ month.dehumidification_kwh }}
   }{% if not loop.last %},{% endif %}
   {% endfor %}
 ];
@@ -231,6 +254,16 @@ new Chart(document.getElementById('energyChart'), {
     datasets: [
       { label: 'Chauffage [kWh]', data: monthlyData.map(x => x.heating_kwh), yAxisID: 'y' },
       { label: 'Refroidissement [kWh]', data: monthlyData.map(x => x.cooling_kwh), yAxisID: 'y' },
+      {
+        label: 'Humidification [kWh]',
+        data: monthlyData.map(x => x.humidification_kwh),
+        yAxisID: 'y'
+      },
+      {
+        label: 'Déshumidification [kWh]',
+        data: monthlyData.map(x => x.dehumidification_kwh),
+        yAxisID: 'y'
+      },
       { label: 'Température extérieure [°C]', data: monthlyData.map(x => x.outdoor_temp_c), yAxisID: 'y1' },
       { label: 'Température effective [°C]', data: monthlyData.map(x => x.effective_temp_c), yAxisID: 'y1' }
     ]
