@@ -1317,3 +1317,55 @@ async def monthly_targets_submit(
         url=f"/caves/{cave.id}",
         status_code=303,
     )
+
+@router.get("/api/caves/{cave_id}/building-summary")
+def api_building_summary(
+    cave_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+    result = simulate_cave(cave)
+
+    return {
+        "source": "simulcave",
+        "cave_id": cave.id,
+        "cave_name": cave.name,
+        "building_only": True,
+
+        "annual": {
+            "heating_kwh": result.total_heating_kwh,
+            "cooling_kwh": result.total_cooling_kwh,
+            "energy_kwh": result.total_energy_kwh,
+            "cost_chf": result.annual_cost_chf,
+            "co2_kg": result.annual_co2_kg,
+            "co2_tons": result.annual_co2_tons,
+        },
+
+        "monthly": [
+            {
+                "month": month.month,
+                "heating_kwh": month.heating_kwh,
+                "cooling_kwh": month.cooling_kwh,
+                "ventilation_heating_kwh": month.ventilation_heating_kwh,
+                "ventilation_cooling_kwh": month.ventilation_cooling_kwh,
+                "effective_temp_c": month.effective_temp_c,
+                "relative_humidity_percent": month.relative_humidity_percent,
+                "dew_point_c": month.dew_point_c,
+                "condensation_risk": month.condensation_risk,
+            }
+            for month in result.monthly_results
+        ],
+
+        "zones": [
+            {
+                "id": zone.id,
+                "name": zone.name,
+                "level_name": zone.level_name or "Rez",
+                "level_index": zone.level_index or 0,
+                "volume_m3": zone.volume_m3,
+                "floor_depth_m": zone.floor_depth_m or 0,
+            }
+            for zone in cave.zones
+        ],
+    }
