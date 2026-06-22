@@ -163,6 +163,37 @@ Couleur plus foncée = besoin énergétique mensuel plus élevé.
 </div>
 
 <h3>Classement énergétique des zones</h3>
+{% if result.zone_results %}
+<div class="action-panel">
+    <h3>Zones prioritaires</h3>
+
+    <ol>
+    {% for zone in result.zone_results[:3] %}
+        <li>
+            <strong>{{ zone.zone_name }}</strong>
+            ({{ zone.level_name }})
+            — {{ zone.total_kwh }} kWh/an
+        </li>
+    {% endfor %}
+    </ol>
+</div>
+{% endif %}
+{% set top_zone = result.zone_results[0] if result.zone_results else None %}
+
+{% if top_zone %}
+<div class="info-box">
+    <strong>Analyse automatique</strong><br>
+
+    La zone la plus énergivore est
+    <strong>{{ top_zone.zone_name }}</strong>
+    avec
+    <strong>{{ top_zone.total_kwh }} kWh/an</strong>.
+
+    Cette zone mérite une analyse prioritaire :
+    isolation, ventilation, température cible ou
+    position dans le bâtiment.
+</div>
+{% endif %}
 
 <table>
   <thead>
