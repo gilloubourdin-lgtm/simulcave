@@ -162,6 +162,35 @@ Couleur plus foncée = besoin énergétique mensuel plus élevé.
     {% endfor %}
 </div>
 
+<h3>Classement énergétique des zones</h3>
+
+<table>
+  <thead>
+    <tr>
+      <th>Zone</th>
+      <th>Niveau</th>
+      <th>Chaud enveloppe [kWh/an]</th>
+      <th>Froid enveloppe [kWh/an]</th>
+      <th>Ventilation chaud [kWh/an]</th>
+      <th>Ventilation froid [kWh/an]</th>
+      <th>Total [kWh/an]</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for zone in result.zone_results %}
+    <tr>
+      <td><strong>{{ zone.zone_name }}</strong></td>
+      <td>{{ zone.level_name }}</td>
+      <td>{{ zone.heating_kwh }}</td>
+      <td>{{ zone.cooling_kwh }}</td>
+      <td>{{ zone.ventilation_heating_kwh }}</td>
+      <td>{{ zone.ventilation_cooling_kwh }}</td>
+      <td><strong>{{ zone.total_kwh }}</strong></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
 <script>
 document.querySelectorAll(".heatmap-grid").forEach(grid => {
     const cells = grid.querySelectorAll(".heatmap-cell");

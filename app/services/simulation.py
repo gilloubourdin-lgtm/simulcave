@@ -35,6 +35,15 @@ class WallResult:
     cooling_kwh: float
     total_kwh: float
 
+@dataclass
+class ZoneResult:
+    zone_name: str
+    level_name: str
+    heating_kwh: float
+    cooling_kwh: float
+    ventilation_heating_kwh: float
+    ventilation_cooling_kwh: float
+    total_kwh: float
 
 @dataclass
 class SimulationResult:
@@ -187,6 +196,8 @@ def simulate_cave(cave) -> SimulationResult:
 
     wall_totals = {}
 
+    zone_totals = {}
+
     for wall in cave.walls:
         wall_totals[wall.id] = {
             "wall": wall,
@@ -210,6 +221,14 @@ def simulate_cave(cave) -> SimulationResult:
 
         for zone in cave.zones:
             zone_ratio = zone.volume_m3 / total_volume
+            if zone.id not in zone_totals:
+                zone_totals[zone.id] = {
+                    "zone": zone,
+                    "heating": 0,
+                    "cooling": 0,
+                    "ventilation_heating": 0,
+                    "ventilation_cooling": 0,
+                }
             zone_volume = zone.volume_m3 or (total_volume * zone_ratio)
 
             monthly_target = get_zone_monthly_target(zone, month_number)
@@ -235,7 +254,7 @@ def simulate_cave(cave) -> SimulationResult:
                 ach = getattr(cave, "ventilation_rate_ach", 0.2) or 0.2
 
                 if outdoor_temp < target_temp:
-                    month_ventilation_heating += calculate_ventilation_load_kwh(
+                    vent_heating = calculate_ventilation_load_kwh(
                         volume_m3=zone_volume,
                         air_changes_per_hour=ach,
                         indoor_temp_c=target_temp,
@@ -243,14 +262,20 @@ def simulate_cave(cave) -> SimulationResult:
                         hours=hours,
                     )
 
+                    month_ventilation_heating += vent_heating
+                    zone_totals[zone.id]["ventilation_heating"] += vent_heating
+
                 elif outdoor_temp > target_temp:
-                    month_ventilation_cooling += calculate_ventilation_load_kwh(
+                    vent_cooling = calculate_ventilation_load_kwh(
                         volume_m3=zone_volume,
                         air_changes_per_hour=ach,
                         indoor_temp_c=target_temp,
                         outdoor_temp_c=outdoor_temp,
                         hours=hours,
                     )
+
+                    month_ventilation_cooling += vent_cooling
+                    zone_totals[zone.id]["ventilation_cooling"] += vent_cooling
 
             for wall in cave.walls:
                 wall_temp = wall_external_temperature(
@@ -293,6 +318,9 @@ def simulate_cave(cave) -> SimulationResult:
 
                 wall_totals[wall.id]["heating"] += wall_heating
                 wall_totals[wall.id]["cooling"] += wall_cooling
+
+                zone_totals[zone.id]["heating"] += wall_heating
+                zone_totals[zone.id]["cooling"] += wall_cooling
 
         if effective_temperatures:
             effective_temp = sum(effective_temperatures) / len(effective_temperatures)
@@ -417,6 +445,36 @@ def simulate_cave(cave) -> SimulationResult:
             )
         )
 
+    zone_results = []
+
+    for item in zone_totals.values():
+        zone = item["zone"]
+
+        heating = item["heating"]
+        cooling = item["cooling"]
+        ventilation_heating = item["ventilation_heating"]
+        ventilation_cooling = item["ventilation_cooling"]
+
+        total = heating + cooling + ventilation_heating + ventilation_cooling
+
+        zone_results.append(
+            ZoneResult(
+                zone_name=zone.name,
+                level_name=zone.level_name or "Rez",
+                heating_kwh=round(heating, 1),
+                cooling_kwh=round(cooling, 1),
+                ventilation_heating_kwh=round(ventilation_heating, 1),
+                ventilation_cooling_kwh=round(ventilation_cooling, 1),
+                total_kwh=round(total, 1),
+            )
+        )
+
+    zone_results = sorted(
+        zone_results,
+        key=lambda zone: zone.total_kwh,
+        reverse=True,
+    )
+
     return SimulationResult(
         monthly_results=monthly_results,
         heating_kwh=round(total_envelope_heating, 1),
@@ -436,4 +494,5 @@ def simulate_cave(cave) -> SimulationResult:
         weather_source=weather_source,
         soil_temperature_c=round(soil_temp, 1),
         wall_results=wall_results,
+        zone_results=zone_results,
     )
