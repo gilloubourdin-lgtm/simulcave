@@ -246,6 +246,14 @@
     <text x="{{ 90 + zone.x_m * scale_x }}" y="{{ 195 + zone.y_m * scale_y }}" font-size="16">
       HR : {{ zone.target_humidity_percent }} %
     </text>
+
+    <text x="{{ 90 + zone.x_m * scale_x }}" y="{{ 220 + zone.y_m * scale_y }}" font-size="16">
+      Niveau : {{ zone.level_name or "Rez" }}
+    </text>
+
+    <text x="{{ 90 + zone.x_m * scale_x }}" y="{{ 245 + zone.y_m * scale_y }}" font-size="16">
+      Profondeur : {{ zone.floor_depth_m or 0 }} m
+    </text>
     {% endfor %}
   </svg>
 

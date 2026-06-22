@@ -168,6 +168,8 @@ setThermalMode("winter");
       <th>Temp. hiver [°C]</th>
       <th>Temp. été [°C]</th>
       <th>Humidité [%]</th>
+      <th>Niveau</th>
+      <th>Profondeur [m]</th>
     </tr>
   </thead>
   <tbody>
@@ -182,6 +184,8 @@ setThermalMode("winter");
       <td>{{ zone.target_temp_winter_c }}</td>
       <td>{{ zone.target_temp_summer_c }}</td>
       <td>{{ zone.target_humidity_percent }}</td>
+      <td>{{ zone.level_name or "Rez" }}</td>
+      <td>{{ zone.floor_depth_m or 0 }}</td>
     </tr>
     {% endfor %}
   </tbody>
