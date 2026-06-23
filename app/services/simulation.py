@@ -61,6 +61,8 @@ class SimulationResult:
     envelope_energy_kwh: float
     ventilation_energy_kwh: float
     humidity_energy_kwh: float
+    climate_score: float
+    climate_label: str
 
     total_heating_kwh: float
     total_cooling_kwh: float
@@ -481,6 +483,48 @@ def simulate_cave(cave) -> SimulationResult:
         reverse=True,
     )
 
+    temperature_values = [
+        month.effective_temp_c
+        for month in monthly_results
+    ]
+
+    humidity_values = [
+        month.relative_humidity_percent
+        for month in monthly_results
+    ]
+
+    temperature_amplitude = (
+        max(temperature_values) - min(temperature_values)
+        if temperature_values else 0
+    )
+
+    humidity_amplitude = (
+        max(humidity_values) - min(humidity_values)
+        if humidity_values else 0
+    )
+
+    condensation_penalty = sum(
+        8 if month.condensation_risk == "élevé"
+        else 4 if month.condensation_risk == "moyen"
+        else 0
+        for month in monthly_results
+    )
+
+    climate_score = 100
+    climate_score -= temperature_amplitude * 3
+    climate_score -= humidity_amplitude * 1.2
+    climate_score -= condensation_penalty
+    climate_score = max(0, min(100, climate_score))
+
+    if climate_score >= 85:
+        climate_label = "excellent"
+    elif climate_score >= 70:
+        climate_label = "bon"
+    elif climate_score >= 55:
+        climate_label = "à surveiller"
+    else:
+        climate_label = "critique"
+
     return SimulationResult(
         monthly_results=monthly_results,
         heating_kwh=round(total_envelope_heating, 1),
@@ -502,17 +546,19 @@ def simulate_cave(cave) -> SimulationResult:
         wall_results=wall_results,
         zone_results=zone_results,
         envelope_energy_kwh=round(
-    total_envelope_heating + total_envelope_cooling,
-        1,
-    ),
+        total_envelope_heating + total_envelope_cooling,
+            1,
+        ),
 
-    ventilation_energy_kwh=round(
-        total_ventilation_heating + total_ventilation_cooling,
-        1,
-    ),
+        ventilation_energy_kwh=round(
+            total_ventilation_heating + total_ventilation_cooling,
+            1,
+        ),
 
-    humidity_energy_kwh=round(
-        total_humidification + total_dehumidification,
-        1,
-    ),
+        humidity_energy_kwh=round(
+            total_humidification + total_dehumidification,
+            1,
+        ),
+        climate_score=round(climate_score, 0),
+        climate_label=climate_label,
     )

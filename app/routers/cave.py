@@ -428,13 +428,42 @@ def cave_detail(
     current_user: User = Depends(require_user),
 ):
     cave = get_user_cave(db, cave_id, current_user)
+    result = simulate_cave(cave)
 
     return render_template(
         request,
         "cave_detail.html",
-        {"cave": cave},
+        {
+            "cave": cave,
+            "result": result,
+        },
     )
 
+@router.get("/zones/{zone_id}/update")
+def update_zone_form(
+    zone_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    zone = db.query(Zone).join(Cave).filter(
+        Zone.id == zone_id,
+        Cave.user_id == current_user.id,
+    ).first()
+
+    if not zone:
+        raise HTTPException(
+            status_code=404,
+            detail="Zone introuvable.",
+        )
+
+    return render_template(
+        request,
+        "zone_edit.html",
+        {
+            "zone": zone,
+        },
+    )
 
 @router.post("/zones/{zone_id}/update")
 def update_zone(
