@@ -25,12 +25,16 @@ WEATHER_DATA = {
     "Tessin": {"temps": [5, 7, 10, 14, 18, 22, 25, 24, 20, 15, 10, 6]},
     "Zurich": {"temps": [1, 2, 6, 10, 14, 18, 21, 20, 16, 10, 5, 2]},
     "Alpes": {"temps": [-3, -2, 1, 5, 9, 13, 16, 15, 11, 6, 1, -2]},
+    "Neuchâtel": {"temps": [2, 3, 6, 10, 14, 18, 21, 20, 16, 11, 6, 3]},
+    "Jura": {"temps": [0, 1, 5, 9, 13, 17, 20, 19, 15, 9, 4, 1]},
+    "Berne": {"temps": [1, 2, 6, 10, 14, 18, 21, 20, 16, 10, 5, 2]},
 }
 
 
 def get_weather_for_region(region: str) -> dict:
-    weather = WEATHER_DATA.get(region, WEATHER_DATA["Vaud"]).copy()
-    weather["source"] = f"région climatique de secours : {region}"
+    region_key = region if region in WEATHER_DATA else "Vaud"
+    weather = WEATHER_DATA[region_key].copy()
+    weather["source"] = f"région climatique de secours : {region_key}"
     return weather
 
 

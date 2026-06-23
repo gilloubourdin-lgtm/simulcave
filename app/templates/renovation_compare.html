@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Comparaison avant / après rénovation</h2>
+
+<h3>{{ cave.name }}</h3>
+
+<div class="kpi-grid">
+
+    <div class="kpi important">
+        <h3>Situation actuelle</h3>
+        <p>{{ baseline.total_energy_kwh|round(0) }} kWh/an</p>
+    </div>
+
+    <div class="kpi important">
+        <h3>Coût annuel</h3>
+        <p>{{ baseline.annual_cost_chf|round(0) }} CHF/an</p>
+    </div>
+
+    <div class="kpi important">
+        <h3>CO₂ annuel</h3>
+        <p>{{ baseline.annual_co2_tons|round(2) }} t/an</p>
+    </div>
+
+</div>
+
+<h3>Scénarios comparés</h3>
+
+<table>
+    <thead>
+        <tr>
+            <th>Scénario</th>
+            <th>Investissement</th>
+            <th>Énergie actuelle</th>
+            <th>Énergie après</th>
+            <th>Gain</th>
+            <th>Économie</th>
+            <th>CO₂ évité</th>
+            <th>ROI</th>
+        </tr>
+    </thead>
+
+    <tbody>
+
+    {% for item in comparisons %}
+    <tr>
+
+        <td>
+            {{ item.scenario.name }}
+        </td>
+
+        <td>
+            {{ item.scenario.investment_chf|round(0) }} CHF
+        </td>
+
+        <td>
+            {{ item.baseline_energy_kwh|round(0) }}
+        </td>
+
+        <td>
+            {{ item.renovated_energy_kwh|round(0) }}
+        </td>
+
+        <td>
+            <strong>
+                -{{ item.energy_saving_percent }} %
+            </strong>
+        </td>
+
+        <td>
+            {{ item.scenario.money_saved_chf|round(0) }} CHF/an
+        </td>
+
+        <td>
+            {{ item.co2_saving_tons|round(2) }} t/an
+        </td>
+
+        <td>
+            {% if item.scenario.payback_years %}
+                {{ item.scenario.payback_years }} ans
+            {% else %}
+                —
+            {% endif %}
+        </td>
+
+    </tr>
+    {% endfor %}
+
+    </tbody>
+</table>
+
+<h3>Comparaison énergétique</h3>
+
+<canvas id="renovationChart" height="120"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+const labels = [
+{% for item in comparisons %}
+"{{ item.scenario.name }}",
+{% endfor %}
+];
+
+const beforeData = [
+{% for item in comparisons %}
+{{ item.baseline_energy_kwh }},
+{% endfor %}
+];
+
+const afterData = [
+{% for item in comparisons %}
+{{ item.renovated_energy_kwh }},
+{% endfor %}
+];
+
+new Chart(
+    document.getElementById("renovationChart"),
+    {
+        type: "bar",
+
+        data: {
+            labels: labels,
+
+            datasets: [
+                {
+                    label: "Situation actuelle [kWh/an]",
+                    data: beforeData,
+                },
+                {
+                    label: "Après rénovation [kWh/an]",
+                    data: afterData,
+                }
+            ]
+        },
+
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: "top"
+                }
+            }
+        }
+    }
+);
+
+</script>
+
+<p>
+    <a class="button"
+       href="/caves/{{ cave.id }}/renovation">
+       Retour aux scénarios
+    </a>
+
+    <a class="button"
+       href="/caves/{{ cave.id }}">
+       Retour à la cave
+    </a>
+</p>
+
+{% endblock %}

@@ -626,6 +626,51 @@ def renovation_custom_form(
         {"cave": cave},
     )
 
+@router.get("/caves/{cave_id}/renovation/compare")
+def renovation_compare(
+    cave_id: int,
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_user),
+):
+    cave = get_user_cave(db, cave_id, current_user)
+
+    baseline = simulate_cave(cave)
+    scenarios = generate_renovation_scenarios(cave)
+
+    comparisons = []
+
+    for scenario in scenarios:
+        energy_saving_percent = 0
+
+        if baseline.total_energy_kwh > 0:
+            energy_saving_percent = (
+                scenario.energy_saved_kwh
+                / baseline.total_energy_kwh
+                * 100
+            )
+
+        comparisons.append({
+            "scenario": scenario,
+            "baseline_energy_kwh": baseline.total_energy_kwh,
+            "renovated_energy_kwh": baseline.total_energy_kwh - scenario.energy_saved_kwh,
+            "energy_saving_percent": round(energy_saving_percent, 1),
+            "baseline_cost_chf": baseline.annual_cost_chf,
+            "renovated_cost_chf": baseline.annual_cost_chf - scenario.money_saved_chf,
+            "baseline_co2_tons": baseline.annual_co2_tons,
+            "co2_saving_tons": round(scenario.co2_saved_kg / 1000, 2),
+        })
+
+    return render_template(
+        request,
+        "renovation_compare.html",
+        {
+            "cave": cave,
+            "baseline": baseline,
+            "comparisons": comparisons,
+        },
+    )
+
 
 @router.post("/caves/{cave_id}/renovation/custom")
 def renovation_custom_result(

@@ -4,7 +4,24 @@ from dataclasses import dataclass
 import math
 
 from app.services.weather import MONTHS, HOURS_PER_MONTH, get_weather_for_cave
+from pydantic import BaseModel
 
+class RenovationComparison(BaseModel):
+    baseline_energy_kwh: float
+    renovated_energy_kwh: float
+
+    energy_saving_kwh: float
+    energy_saving_percent: float
+
+    baseline_cost_chf: float
+    renovated_cost_chf: float
+    cost_saving_chf: float
+
+    baseline_co2_tons: float
+    renovated_co2_tons: float
+    co2_saving_tons: float
+
+    payback_years: float | None = None
 
 @dataclass
 class MonthlyResult:
@@ -239,9 +256,12 @@ def simulate_cave(cave) -> SimulationResult:
             zone_volume = zone.volume_m3 or (total_volume * zone_ratio)
 
             monthly_target = get_zone_monthly_target(zone, month_number)
+            is_regulated = True
 
             if monthly_target:
                 target_temp = monthly_target.target_temp_c
+                phase = (monthly_target.phase or "").lower() if monthly_target else ""
+                is_regulated = "non" not in phase and "régul" not in phase
                 target_humidity = (
                     monthly_target.target_humidity_percent
                     or zone.target_humidity_percent
@@ -256,6 +276,9 @@ def simulate_cave(cave) -> SimulationResult:
                 target_humidity = zone.target_humidity_percent or 75
 
             humidity_target_values.append(target_humidity)
+
+            if not is_regulated:
+                continue
 
             if getattr(cave, "ventilation_enabled", True):
                 ach = getattr(cave, "ventilation_rate_ach", 0.2) or 0.2
@@ -561,4 +584,64 @@ def simulate_cave(cave) -> SimulationResult:
         ),
         climate_score=round(climate_score, 0),
         climate_label=climate_label,
+    )
+
+def compare_simulations(
+    baseline,
+    renovated,
+    investment_chf: float | None = None
+):
+
+    energy_saving_kwh = (
+        baseline.total_energy_kwh
+        - renovated.total_energy_kwh
+    )
+
+    energy_saving_percent = (
+        energy_saving_kwh
+        / baseline.total_energy_kwh
+        * 100
+    )
+
+    cost_saving_chf = (
+        baseline.annual_cost_chf
+        - renovated.annual_cost_chf
+    )
+
+    co2_saving_tons = (
+        baseline.annual_co2_tons
+        - renovated.annual_co2_tons
+    )
+
+    payback = None
+
+    if (
+        investment_chf
+        and cost_saving_chf > 0
+    ):
+        payback = investment_chf / cost_saving_chf
+
+    return RenovationComparison(
+        baseline_energy_kwh=baseline.total_energy_kwh,
+        renovated_energy_kwh=renovated.total_energy_kwh,
+
+        energy_saving_kwh=energy_saving_kwh,
+        energy_saving_percent=round(
+            energy_saving_percent,
+            1
+        ),
+
+        baseline_cost_chf=baseline.annual_cost_chf,
+        renovated_cost_chf=renovated.annual_cost_chf,
+        cost_saving_chf=cost_saving_chf,
+
+        baseline_co2_tons=baseline.annual_co2_tons,
+        renovated_co2_tons=renovated.annual_co2_tons,
+        co2_saving_tons=co2_saving_tons,
+
+        payback_years=(
+            round(payback, 1)
+            if payback
+            else None
+        )
     )
