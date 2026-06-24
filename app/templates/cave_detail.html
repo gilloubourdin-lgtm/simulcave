@@ -14,6 +14,14 @@
     </p>
   </div>
 
+  <div class="kpi important">
+    <h3>Classe énergétique</h3>
+    <p>
+      {{ result.energy_class }}<br>
+      <small>{{ result.energy_intensity_kwh_m3 }} kWh/m³/an</small>
+    </p>
+  </div>
+
   <div class="kpi">
     <h3>Énergie annuelle</h3>
     <p>{{ result.total_energy_kwh }} kWh/an</p>
@@ -150,10 +158,6 @@
     <h4>Rénovation</h4>
     <a class="button" href="/caves/{{ cave.id }}/renovation">Scénarios rénovation</a>
     <a class="button" href="/caves/{{ cave.id }}/renovation/custom">Scénario personnalisé</a>
-    <a class="button"
-      href="/caves/{{ cave.id }}/compare">
-      Comparaison rénovation
-    </a>
     <a class="button" href="/caves/{{ cave.id }}/renovation/compare">
       Comparaison avant / après
     </a>

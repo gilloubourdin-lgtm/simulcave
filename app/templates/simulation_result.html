@@ -45,6 +45,18 @@
       <small>{{ result.climate_label|capitalize }}</small>
     </p>
   </div>
+  <div class="kpi important">
+    <h3>Classe énergétique</h3>
+
+    <p>
+      Classe {{ result.energy_class }}
+    </p>
+
+    <small>
+      {{ result.energy_intensity_kwh_m3 }}
+      kWh/m³/an
+    </small>
+  </div>
   <div class="kpi"><h3>Besoins chaud enveloppe</h3><p>{{ result.heating_kwh }} kWh/an</p></div>
   <div class="kpi"><h3>Besoins froid enveloppe</h3><p>{{ result.cooling_kwh }} kWh/an</p></div>
   <div class="kpi">

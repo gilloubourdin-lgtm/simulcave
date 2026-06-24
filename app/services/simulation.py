@@ -80,6 +80,8 @@ class SimulationResult:
     humidity_energy_kwh: float
     climate_score: float
     climate_label: str
+    energy_intensity_kwh_m3: float
+    energy_class: str
 
     total_heating_kwh: float
     total_cooling_kwh: float
@@ -548,6 +550,14 @@ def simulate_cave(cave) -> SimulationResult:
     else:
         climate_label = "critique"
 
+    energy_intensity_kwh_m3 = (
+        total_energy / total_volume
+        if total_volume > 0
+        else 0
+    )
+
+    energy_class = get_energy_class(energy_intensity_kwh_m3)
+
     return SimulationResult(
         monthly_results=monthly_results,
         heating_kwh=round(total_envelope_heating, 1),
@@ -584,6 +594,8 @@ def simulate_cave(cave) -> SimulationResult:
         ),
         climate_score=round(climate_score, 0),
         climate_label=climate_label,
+        energy_intensity_kwh_m3=round(energy_intensity_kwh_m3, 1),
+        energy_class=energy_class,
     )
 
 def compare_simulations(
@@ -645,3 +657,18 @@ def compare_simulations(
             else None
         )
     )
+
+def get_energy_class(kwh_per_m3: float) -> str:
+    if kwh_per_m3 < 20:
+        return "A"
+    if kwh_per_m3 < 30:
+        return "B"
+    if kwh_per_m3 < 40:
+        return "C"
+    if kwh_per_m3 < 55:
+        return "D"
+    if kwh_per_m3 < 75:
+        return "E"
+    if kwh_per_m3 < 100:
+        return "F"
+    return "G"
