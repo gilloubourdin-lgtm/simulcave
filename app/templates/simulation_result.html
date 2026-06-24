@@ -3,22 +3,24 @@
 {% block content %}
 
 <div class="info-box">
-    <strong>Simulation bâtiment</strong><br>
+    <strong>Simulation bâtiment — périmètre SimulCave</strong><br>
 
-    Les résultats SimulCave représentent uniquement les besoins
-    énergétiques du bâtiment :
+    Les résultats SimulCave représentent uniquement les besoins énergétiques
+    et climatiques liés au bâtiment :
 
     <ul>
-        <li>transmissions thermiques à travers l'enveloppe ;</li>
-        <li>ventilation et renouvellement d'air ;</li>
-        <li>conditions météorologiques ;</li>
-        <li>températures et humidités cibles des zones.</li>
+        <li>transmissions thermiques à travers l’enveloppe ;</li>
+        <li>ventilation et renouvellement d’air ;</li>
+        <li>effet de l’enterrement, des niveaux et du contact avec le sol ;</li>
+        <li>températures et humidités cibles mensuelles des zones ;</li>
+        <li>humidification, déshumidification et risque de condensation ;</li>
+        <li>analyse énergétique par zone, par paroi et par poste.</li>
     </ul>
 
     Les consommations liées au process vinicole
-    (fermentation alcoolique, FML, stabilisation,
-    refroidissement des cuves, etc.)
-    doivent être évaluées séparément dans NRCave.
+    — fermentation alcoolique, FML, stabilisation, refroidissement des cuves,
+    pompage, pressurage, embouteillage, etc. —
+    doivent être évaluées séparément dans NRCave afin d’éviter un double comptage.
 </div>
 
 <h2>Résultat de simulation — {{ cave.name }}</h2>
@@ -36,6 +38,13 @@
 </p>
 
 <div class="kpi-grid">
+  <div class="kpi important">
+    <h3>Indice climatique</h3>
+    <p>
+      {{ result.climate_score }}/100<br>
+      <small>{{ result.climate_label|capitalize }}</small>
+    </p>
+  </div>
   <div class="kpi"><h3>Besoins chaud enveloppe</h3><p>{{ result.heating_kwh }} kWh/an</p></div>
   <div class="kpi"><h3>Besoins froid enveloppe</h3><p>{{ result.cooling_kwh }} kWh/an</p></div>
   <div class="kpi">
@@ -289,15 +298,24 @@ document.querySelectorAll(".heatmap-grid").forEach(grid => {
 <h3>Hypothèses actuelles</h3>
 
 <ul>
-  <li>Calcul mensuel basé sur la source météo indiquée ci-dessus.</li>
+  <li>Simulation mensuelle basée sur la source météo indiquée ci-dessus.</li>
   <li>Si la météo dynamique est activée et que les coordonnées GPS sont disponibles, les températures proviennent d’Open-Meteo historique.</li>
-  <li>Si la météo dynamique n’est pas disponible, la région climatique de secours est utilisée.</li>
-  <li>Température effective = température extérieure, température sol ou mix des deux selon le type de paroi et le facteur d’enterrement.</li>
+  <li>Si la météo dynamique échoue ou si les coordonnées GPS sont absentes, SimulCave utilise une région climatique de secours suisse.</li>
+  <li>Les cantons/régions sans données dynamiques utilisent un fallback climatique régional.</li>
+  <li>Température effective = température extérieure, température du sol ou combinaison des deux selon le type de paroi, le facteur d’enterrement et le niveau de la zone.</li>
+  <li>Les zones en sous-sol sont davantage influencées par la température du sol.</li>
   <li>Formule enveloppe : Q = U × A × ΔT × heures.</li>
+  <li>Les surfaces de parois sont réparties entre les zones selon leur volume relatif.</li>
+  <li>Les parois sont corrigées par le facteur d’inertie du matériau.</li>
+  <li>Les profils mensuels des zones remplacent la logique simple été/hiver lorsque des consignes mensuelles sont définies.</li>
+  <li>Une zone ou un mois indiqué comme “Non régulé” ne génère pas de besoin actif de chauffage/refroidissement pour cette période.</li>
   <li>Les besoins process vinicoles ne sont pas comptabilisés dans SimulCave afin d’éviter un double comptage avec NRCave.</li>
   <li>Les besoins affichés mensuellement incluent enveloppe + ventilation + correction hygrométrique.</li>
   <li>L’humidification et la déshumidification sont estimées à partir de l’écart entre l’humidité cible et l’humidité relative estimée.</li>
-  <li>Les parois sont corrigées par le facteur d’inertie du matériau.</li>
+  <li>Le risque de condensation est évalué à partir du point de rosée et de la température effective.</li>
+  <li>L’indice climatique synthétise la stabilité thermique, la stabilité hygrométrique et le risque de condensation.</li>
+  <li>Les heatmaps mensuelles et par zones servent à identifier les périodes et espaces les plus énergivores.</li>
+  <li>Les scénarios de rénovation comparent les besoins actuels avec des réductions de valeurs U ou de ventilation.</li>
   <li>Température moyenne du sol utilisée : {{ result.soil_temperature_c }} °C.</li>
   <li>Prix énergie : {{ cave.energy_price_chf_per_kwh }} CHF/kWh.</li>
   <li>Facteur CO₂ : {{ cave.co2_factor_kg_per_kwh }} kgCO₂/kWh.</li>
