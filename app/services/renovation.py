@@ -24,6 +24,14 @@ class RenovationScenario:
 
 
 def apply_u_value_reduction(cave, wall_filter, reduction_factor: float):
+    # Force le chargement SQLAlchemy avant deepcopy
+    list(cave.walls)
+    list(cave.zones)
+
+    for zone in cave.zones:
+        if hasattr(zone, "monthly_targets"):
+            list(zone.monthly_targets)
+
     cave_copy = deepcopy(cave)
 
     for wall in cave_copy.walls:
