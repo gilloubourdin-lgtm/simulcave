@@ -256,6 +256,34 @@
     </text>
     {% endfor %}
   </svg>
+  <h3>Détail des zones</h3>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Zone</th>
+        <th>Niveau</th>
+        <th>Profondeur [m]</th>
+        <th>Volume [m³]</th>
+        <th>Temp. hiver [°C]</th>
+        <th>Temp. été [°C]</th>
+        <th>Humidité [%]</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for zone in cave.zones %}
+      <tr>
+        <td>{{ zone.name }}</td>
+        <td>{{ zone.level_name or "Rez" }}</td>
+        <td>{{ zone.floor_depth_m or 0 }}</td>
+        <td>{{ zone.volume_m3 }}</td>
+        <td>{{ zone.target_temp_winter_c }}</td>
+        <td>{{ zone.target_temp_summer_c }}</td>
+        <td>{{ zone.target_humidity_percent }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
   <h2>2. Résultats annuels</h2>
 

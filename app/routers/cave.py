@@ -2,11 +2,12 @@
 
 import csv
 import io
+import os
 import json
 from openpyxl import Workbook
 from openpyxl.styles import Font
 
-from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, Header
 from fastapi.responses import RedirectResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -1397,13 +1398,24 @@ async def monthly_targets_submit(
         status_code=303,
     )
 
+SIMULCAVE_API_TOKEN = os.getenv("SIMULCAVE_API_TOKEN", "")
+
+
 @router.get("/api/caves/{cave_id}/building-summary")
 def api_building_summary(
     cave_id: int,
+    x_simulcave_token: str | None = Header(None),
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_user),
 ):
-    cave = get_user_cave(db, cave_id, current_user)
+    if SIMULCAVE_API_TOKEN:
+        if x_simulcave_token != SIMULCAVE_API_TOKEN:
+            raise HTTPException(status_code=401, detail="Invalid API token")
+
+    cave = db.query(Cave).filter(Cave.id == cave_id).first()
+
+    if not cave:
+        raise HTTPException(status_code=404, detail="Cave introuvable.")
+
     result = simulate_cave(cave)
 
     return {
@@ -1411,6 +1423,11 @@ def api_building_summary(
         "cave_id": cave.id,
         "cave_name": cave.name,
         "building_only": True,
+
+        "climate_score": result.climate_score,
+        "climate_label": result.climate_label,
+        "energy_class": result.energy_class,
+        "energy_intensity_kwh_m3": result.energy_intensity_kwh_m3,
 
         "annual": {
             "heating_kwh": result.total_heating_kwh,
@@ -1426,25 +1443,11 @@ def api_building_summary(
                 "month": month.month,
                 "heating_kwh": month.heating_kwh,
                 "cooling_kwh": month.cooling_kwh,
-                "ventilation_heating_kwh": month.ventilation_heating_kwh,
-                "ventilation_cooling_kwh": month.ventilation_cooling_kwh,
                 "effective_temp_c": month.effective_temp_c,
                 "relative_humidity_percent": month.relative_humidity_percent,
-                "dew_point_c": month.dew_point_c,
+                "humidity_risk_index": getattr(month, "humidity_risk_index", 0),
                 "condensation_risk": month.condensation_risk,
             }
             for month in result.monthly_results
-        ],
-
-        "zones": [
-            {
-                "id": zone.id,
-                "name": zone.name,
-                "level_name": zone.level_name or "Rez",
-                "level_index": zone.level_index or 0,
-                "volume_m3": zone.volume_m3,
-                "floor_depth_m": zone.floor_depth_m or 0,
-            }
-            for zone in cave.zones
         ],
     }
