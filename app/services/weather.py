@@ -30,11 +30,44 @@ WEATHER_DATA = {
     "Berne": {"temps": [1, 2, 6, 10, 14, 18, 21, 20, 16, 10, 5, 2]},
 }
 
+REGION_ALIASES = {
+    "Argovie": "Zurich",
+    "Appenzell Rhodes-Extérieures": "Zurich",
+    "Appenzell Rhodes-Intérieures": "Zurich",
+    "Bâle-Campagne": "Zurich",
+    "Bâle-Ville": "Zurich",
+    "Berne": "Berne",
+    "Fribourg": "Fribourg",
+    "Genève": "Genève",
+    "Glaris": "Alpes",
+    "Grisons": "Alpes",
+    "Jura": "Jura",
+    "Lucerne": "Zurich",
+    "Neuchâtel": "Neuchâtel",
+    "Nidwald": "Alpes",
+    "Obwald": "Alpes",
+    "Schaffhouse": "Zurich",
+    "Schwyz": "Alpes",
+    "Soleure": "Zurich",
+    "Saint-Gall": "Zurich",
+    "Tessin": "Tessin",
+    "Thurgovie": "Zurich",
+    "Uri": "Alpes",
+    "Valais": "Valais",
+    "Vaud": "Vaud",
+    "Zoug": "Zurich",
+    "Zurich": "Zurich",
+}
 
 def get_weather_for_region(region: str) -> dict:
-    region_key = region if region in WEATHER_DATA else "Vaud"
+    region_key = REGION_ALIASES.get(region, region)
+
+    if region_key not in WEATHER_DATA:
+        region_key = "Vaud"
+
     weather = WEATHER_DATA[region_key].copy()
-    weather["source"] = f"région climatique de secours : {region_key}"
+    weather["source"] = f"région climatique de secours : {region} → {region_key}"
+
     return weather
 
 

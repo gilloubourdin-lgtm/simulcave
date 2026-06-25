@@ -12,11 +12,20 @@
            value="{{ cave.name }}"
            required>
 
-    <label>Région</label>
-    <input type="text"
-           name="region"
-           value="{{ cave.region }}"
-           required>
+    <label>Région climatique de secours</label>
+    <select name="region" required>
+    {% for region in [
+        "Argovie", "Appenzell Rhodes-Extérieures", "Appenzell Rhodes-Intérieures",
+        "Bâle-Campagne", "Bâle-Ville", "Berne", "Fribourg", "Genève",
+        "Glaris", "Grisons", "Jura", "Lucerne", "Neuchâtel", "Nidwald",
+        "Obwald", "Schaffhouse", "Schwyz", "Soleure", "Saint-Gall",
+        "Tessin", "Thurgovie", "Uri", "Valais", "Vaud", "Zoug", "Zurich"
+    ] %}
+        <option value="{{ region }}" {% if cave.region == region %}selected{% endif %}>
+        {{ region }}
+        </option>
+    {% endfor %}
+    </select>
 
     <label>Coût énergie [CHF/kWh]</label>
     <input type="number"
