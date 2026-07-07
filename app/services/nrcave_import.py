@@ -30,6 +30,7 @@ def import_nrcave_project(payload: dict, db):
 
     cave = Cave(
         name=data.get("name") or "Cave importée NRCave",
+        user_id=37,
         region=data.get("region") or data.get("canton") or "Vaud",
         address=data.get("address"),
         altitude_m=_safe_float(data.get("altitude_m"), 400),
