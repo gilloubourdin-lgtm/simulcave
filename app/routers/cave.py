@@ -24,6 +24,7 @@ from app.services.renovation import (
 from app.services.pdf import generate_cave_report_pdf
 from app.services.geocoding import geocode_address
 from app.services.nrcave_export import build_nrcave_payload
+from app.services.nrcave_import import import_nrcave_project
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -1455,43 +1456,16 @@ def api_building_summary(
 NRCAVE_API_TOKEN = os.getenv("NRCAVE_API_TOKEN", "")
 
 
-@router.post("/api/nrcave/import")
+@router.post("/api/nrcave/import", name="import_from_nrcave")
 def import_from_nrcave(
     payload: dict,
     x_nrcave_token: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    if NRCAVE_API_TOKEN:
-        if x_nrcave_token != NRCAVE_API_TOKEN:
-            raise HTTPException(status_code=401, detail="Invalid NRCave token")
+    if NRCAVE_API_TOKEN and x_nrcave_token != NRCAVE_API_TOKEN:
+        raise HTTPException(status_code=401, detail="Invalid NRCave token")
 
-    data = payload.get("cave", payload)
-
-    name = data.get("name") or payload.get("name") or "Cave importée NRCave"
-    region = data.get("region") or data.get("canton") or "Vaud"
-
-    cave = Cave(
-        name=name,
-        region=region,
-        address=data.get("address"),
-        altitude_m=float(data.get("altitude_m") or 400),
-        length_m=float(data.get("length_m") or 20),
-        width_m=float(data.get("width_m") or 10),
-        height_m=float(data.get("height_m") or 4),
-        buried_factor=float(data.get("buried_factor") or 0.5),
-        energy_source=data.get("energy_source") or "electricity",
-        energy_price_chf_per_kwh=float(data.get("energy_price_chf_per_kwh") or 0.25),
-        co2_factor_kg_per_kwh=float(data.get("co2_factor_kg_per_kwh") or 0.09),
-        latitude=data.get("latitude"),
-        longitude=data.get("longitude"),
-        use_dynamic_weather=True,
-        ventilation_enabled=True,
-        ventilation_rate_ach=0.10,
-    )
-
-    db.add(cave)
-    db.commit()
-    db.refresh(cave)
+    cave = import_nrcave_project(payload, db)
 
     return {
         "status": "ok",
