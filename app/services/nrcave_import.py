@@ -53,36 +53,82 @@ def import_nrcave_project(payload: dict, db):
     db.add(cave)
     db.flush()
 
-    wall_material = building.get("wall", {}).get("material") or "Béton"
-    roof_material = building.get("roof", {}).get("material") or "Béton"
-    floor_material = building.get("floor", {}).get("material") or "Béton"
+    envelope = building.get("envelope", [])
 
-    wall_u = _safe_float(building.get("wall", {}).get("u_value"), 1.4)
-    roof_u = _safe_float(building.get("roof", {}).get("u_value"), 0.8)
-    floor_u = _safe_float(building.get("floor", {}).get("u_value"), 0.6)
+    # Compatibilité avec les anciens exports NRCave
+    if not envelope:
 
-    walls = [
-        ("Mur Nord", "N", wall_material, length * height, wall_u),
-        ("Mur Sud", "S", wall_material, length * height, wall_u),
-        ("Mur Est", "E", wall_material, width * height, wall_u),
-        ("Mur Ouest", "O", wall_material, width * height, wall_u),
-        ("Toiture", "H", roof_material, length * width, roof_u),
-        ("Sol", "B", floor_material, length * width, floor_u),
-    ]
+        wall_material = building.get("wall", {}).get("material") or "Béton"
+        roof_material = building.get("roof", {}).get("material") or "Béton"
+        floor_material = building.get("floor", {}).get("material") or "Béton"
 
-    for name, orientation, material, area, u_value in walls:
-        props = get_material_properties(material)
+        wall_u = _safe_float(building.get("wall", {}).get("u_value"), 1.4)
+        roof_u = _safe_float(building.get("roof", {}).get("u_value"), 0.8)
+        floor_u = _safe_float(building.get("floor", {}).get("u_value"), 0.6)
 
-        db.add(Wall(
-            cave_id=cave.id,
-            name=name,
-            orientation=orientation,
-            material=material,
-            area_m2=area,
-            u_value=u_value,
-            thickness_m=props["default_thickness_m"],
-            inertia_factor=props["inertia_factor"],
-        ))
+        envelope = [
+            {
+                "name": "Mur Nord",
+                "orientation": "N",
+                "material": wall_material,
+                "area_m2": length * height,
+                "u_value": wall_u,
+            },
+            {
+                "name": "Mur Sud",
+                "orientation": "S",
+                "material": wall_material,
+                "area_m2": length * height,
+                "u_value": wall_u,
+            },
+            {
+                "name": "Mur Est",
+                "orientation": "E",
+                "material": wall_material,
+                "area_m2": width * height,
+                "u_value": wall_u,
+            },
+            {
+                "name": "Mur Ouest",
+                "orientation": "O",
+                "material": wall_material,
+                "area_m2": width * height,
+                "u_value": wall_u,
+            },
+            {
+                "name": "Toiture",
+                "orientation": "H",
+                "material": roof_material,
+                "area_m2": length * width,
+                "u_value": roof_u,
+            },
+            {
+                "name": "Sol",
+                "orientation": "B",
+                "material": floor_material,
+                "area_m2": length * width,
+                "u_value": floor_u,
+            },
+        ]
+
+    for wall in envelope:
+
+        material = wall.get("label") or wall.get("material") or "Béton"
+
+        props = get_material_properties(material) or get_material_properties("Béton")
+
+        db.add(
+            Wall(
+                cave_id=cave.id,
+                name=wall.get("name"),
+                orientation=wall.get("orientation"),
+                material=material,
+                area_m2=_safe_float(wall.get("area_m2")),
+                u_value=_safe_float(wall.get("u_value"), 1.0),
+                thickness_m=props["default_thickness_m"],
+                inertia_factor=props["inertia_factor"],
+            )
+        )
 
     default_monthly_profile = {
         1: (10, 75, "FML / stabilisation"),

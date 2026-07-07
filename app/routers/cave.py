@@ -262,7 +262,7 @@ def create_cave(
     walls = []
 
     for wall_name, orientation, material, area, u_value in wall_inputs:
-        props = get_material_properties(material)
+        props = get_material_properties(material) or get_material_properties("Béton")
 
         walls.append(
             Wall(
