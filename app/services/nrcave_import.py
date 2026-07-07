@@ -28,9 +28,11 @@ def import_nrcave_project(payload: dict, db):
     height = _safe_float(geometry.get("height_m"), 4)
     zone_count = max(1, _safe_int(building.get("thermal", {}).get("zones"), 1))
 
+    SIMULCAVE_DEFAULT_USER_ID = 1
+
     cave = Cave(
         name=data.get("name") or "Cave importée NRCave",
-        user_id=37,
+        user_id=SIMULCAVE_DEFAULT_USER_ID,
         region=data.get("region") or data.get("canton") or "Vaud",
         address=data.get("address"),
         altitude_m=_safe_float(data.get("altitude_m"), 400),
