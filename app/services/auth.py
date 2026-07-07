@@ -1,3 +1,5 @@
+# app/services/auth.py
+
 import os
 from passlib.context import CryptContext
 from itsdangerous import URLSafeSerializer, URLSafeTimedSerializer, BadSignature, SignatureExpired
