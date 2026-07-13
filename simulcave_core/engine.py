@@ -1,3 +1,5 @@
+# app/simulcave_core/engine.py
+
 def run_simulation(data: dict) -> dict:
     """
     Point d'entrée public du moteur SimulCave.

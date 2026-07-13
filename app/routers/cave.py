@@ -1456,19 +1456,74 @@ def api_building_summary(
 NRCAVE_API_TOKEN = os.getenv("NRCAVE_API_TOKEN", "")
 
 
-@router.post("/api/nrcave/import", name="import_from_nrcave")
+@router.post(
+    "/api/nrcave/import",
+    name="import_from_nrcave",
+)
 def import_from_nrcave(
     payload: dict,
     x_nrcave_token: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    if NRCAVE_API_TOKEN and x_nrcave_token != NRCAVE_API_TOKEN:
-        raise HTTPException(status_code=401, detail="Invalid NRCave token")
+    if (
+        NRCAVE_API_TOKEN
+        and x_nrcave_token != NRCAVE_API_TOKEN
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid NRCave token",
+        )
 
-    cave = import_nrcave_project(payload, db)
+    try:
+        cave, created, warnings = (
+            import_nrcave_project(
+                payload,
+                db,
+            )
+        )
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Erreur pendant la synchronisation "
+                f"NRCave → SimulCave : {exc}"
+            ),
+        ) from exc
 
     return {
         "status": "ok",
+        "simulcave_cave_id": cave.id,
+
+        # Compatibilité avec l'ancien client NRCave
         "cave_id": cave.id,
+
         "url": f"/caves/{cave.id}",
+
+        "created": created,
+        "updated": not created,
+
+        "warnings": warnings,
+
+        "nrcave_link": {
+            "instance": cave.nrcave_instance,
+            "cave_id": cave.nrcave_cave_id,
+            "site_key": cave.nrcave_site_key,
+            "last_sync_at": (
+                cave.nrcave_last_sync_at.isoformat()
+                if cave.nrcave_last_sync_at
+                else None
+            ),
+            "schema_version": (
+                cave.nrcave_schema_version
+            ),
+        },
     }

@@ -1,9 +1,18 @@
 # app/models.py
 
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, Boolean, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 
 class User(Base):
     __tablename__ = "users"
@@ -18,27 +27,163 @@ class User(Base):
 class Cave(Base):
     __tablename__ = "caves"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    name = Column(String, nullable=False)
-    user = relationship("User", back_populates="caves")
+    __table_args__ = (
+        UniqueConstraint(
+            "nrcave_instance",
+            "nrcave_cave_id",
+            name="uq_simulcave_nrcave_project",
+        ),
+    )
 
-    address = Column(String, nullable=True)
-    latitude = Column(Float, nullable=True)
-    longitude = Column(Float, nullable=True)
-    use_dynamic_weather = Column(Boolean, default=False)
+    id = Column(
+        Integer,
+        primary_key=True,
+        index=True,
+    )
 
-    region = Column(String, default="Vaud")
-    altitude_m = Column(Float, default=500)
+    user_id = Column(
+        Integer,
+        ForeignKey("users.id"),
+        nullable=True,
+    )
 
-    length_m = Column(Float, nullable=False)
-    width_m = Column(Float, nullable=False)
-    height_m = Column(Float, nullable=False)
+    # ============================================================
+    # Liaison persistante avec NRCave
+    # ============================================================
 
-    buried_factor = Column(Float, default=1.0)
+    nrcave_cave_id = Column(
+        Integer,
+        nullable=True,
+        index=True,
+    )
 
-    ventilation_rate_ach = Column(Float, default=0.2)
-    ventilation_enabled = Column(Boolean, default=True)
+    nrcave_site_key = Column(
+        String,
+        nullable=True,
+        index=True,
+    )
+
+    nrcave_instance = Column(
+        String,
+        nullable=True,
+        default="production",
+        index=True,
+    )
+
+    nrcave_last_sync_at = Column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    nrcave_schema_version = Column(
+        String,
+        nullable=True,
+    )
+
+    # ============================================================
+    # Identité et localisation
+    # ============================================================
+
+    name = Column(
+        String,
+        nullable=False,
+    )
+
+    address = Column(
+        String,
+        nullable=True,
+    )
+
+    latitude = Column(
+        Float,
+        nullable=True,
+    )
+
+    longitude = Column(
+        Float,
+        nullable=True,
+    )
+
+    use_dynamic_weather = Column(
+        Boolean,
+        default=False,
+    )
+
+    region = Column(
+        String,
+        default="Vaud",
+    )
+
+    altitude_m = Column(
+        Float,
+        default=500,
+    )
+
+    # ============================================================
+    # Géométrie
+    # ============================================================
+
+    length_m = Column(
+        Float,
+        nullable=False,
+    )
+
+    width_m = Column(
+        Float,
+        nullable=False,
+    )
+
+    height_m = Column(
+        Float,
+        nullable=False,
+    )
+
+    buried_factor = Column(
+        Float,
+        default=0.5,
+    )
+
+    # ============================================================
+    # Ventilation
+    # ============================================================
+
+    ventilation_rate_ach = Column(
+        Float,
+        default=0.2,
+    )
+
+    ventilation_enabled = Column(
+        Boolean,
+        default=True,
+    )
+
+    # ============================================================
+    # Énergie
+    # ============================================================
+
+    energy_source = Column(
+        String,
+        default="electricity",
+    )
+
+    energy_price_chf_per_kwh = Column(
+        Float,
+        default=0.24,
+    )
+
+    co2_factor_kg_per_kwh = Column(
+        Float,
+        default=0.09,
+    )
+
+    # ============================================================
+    # Relations
+    # ============================================================
+
+    user = relationship(
+        "User",
+        back_populates="caves",
+    )
 
     walls = relationship(
         "Wall",
@@ -57,10 +202,6 @@ class Cave(Base):
         back_populates="cave",
         cascade="all, delete-orphan",
     )
-
-    energy_source = Column(String, default="electricity")
-    energy_price_chf_per_kwh = Column(Float, default=0.24)
-    co2_factor_kg_per_kwh = Column(Float, default=0.09)
 
 
 class Wall(Base):
