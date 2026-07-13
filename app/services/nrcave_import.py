@@ -128,6 +128,13 @@ def _get_or_create_cave(
     payload: dict,
     db,
 ) -> tuple[Cave, bool]:
+    """
+    Recherche une cave SimulCave déjà liée à NRCave.
+
+    Si elle n'existe pas, crée uniquement l'objet Python.
+    Aucun flush SQL ne doit avoir lieu ici.
+    """
+
     (
         source_cave_id,
         site_key,
@@ -146,14 +153,12 @@ def _get_or_create_cave(
             .first()
         )
 
-    # Fallback pour rattacher une ancienne importation
-    # qui n'avait pas encore nrcave_cave_id.
     if cave is None and site_key:
         cave = (
             db.query(Cave)
             .filter(
-                Cave.nrcave_site_key == site_key,
                 Cave.nrcave_instance == instance,
+                Cave.nrcave_site_key == site_key,
             )
             .first()
         )
@@ -163,10 +168,31 @@ def _get_or_create_cave(
     if created:
         cave = Cave(
             user_id=_service_user_id(),
+
+            # Champs obligatoires provisoires.
+            # Ils seront remplacés dans import_nrcave_project()
+            # avant le premier db.flush().
+            name="Cave importée NRCave",
+            length_m=20.0,
+            width_m=10.0,
+            height_m=4.0,
+
+            region="Vaud",
+            altitude_m=500.0,
+            buried_factor=0.5,
+
+            ventilation_enabled=True,
+            ventilation_rate_ach=0.2,
+
+            energy_source="electricity",
+            energy_price_chf_per_kwh=0.24,
+            co2_factor_kg_per_kwh=0.09,
         )
 
         db.add(cave)
-        db.flush()
+
+        # IMPORTANT :
+        # aucun db.flush() ici.
 
     cave.nrcave_cave_id = source_cave_id
     cave.nrcave_site_key = site_key
