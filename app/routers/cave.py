@@ -25,6 +25,9 @@ from app.services.pdf import generate_cave_report_pdf
 from app.services.geocoding import geocode_address
 from app.services.nrcave_export import build_nrcave_payload
 from app.services.nrcave_import import import_nrcave_project
+from app.services.nrcave_results import (
+    build_nrcave_result_payload,
+)
 
 router = APIRouter()
 templates = Jinja2Templates(directory="app/templates")
@@ -1234,70 +1237,21 @@ def export_for_nrcave(
     db: Session = Depends(get_db),
     current_user: User = Depends(require_user),
 ):
-    cave = get_user_cave(db, cave_id, current_user)
+    cave = get_user_cave(
+        db,
+        cave_id,
+        current_user,
+    )
 
     result = simulate_cave(cave)
 
-    thermal_needs = []
-    cooling_needs = []
-    temperature_monthly = []
-    humidity_monthly = []
-    humidity_risk_index_monthly = []
-
-    for month in result.monthly_results:
-        thermal_needs.append(float(month.heating_kwh or 0.0))
-        cooling_needs.append(float(month.cooling_kwh or 0.0))
-        temperature_monthly.append(float(month.effective_temp_c or 0.0))
-
-        humidity_monthly.append(
-            float(month.relative_humidity_percent or 75.0)
-        )
-
-        humidity_risk_index_monthly.append(
-            float(month.humidity_risk_index or 0.0)
-        )
-
-    total_thermal_kwh = sum(thermal_needs)
-
-    recommended_hvac_power_kw = 0.0
-    if total_thermal_kwh > 0:
-        recommended_hvac_power_kw = round(total_thermal_kwh / 1800.0, 1)
-
-    summer_cooling = sum(cooling_needs[5:8])
-
-    passive_cooling_ratio = 0.0
-    if summer_cooling > 0:
-        passive_cooling_ratio = max(
-            0.0,
-            min(1.0, 1.0 - (summer_cooling / 50000.0)),
-        )
-
-    if temperature_monthly:
-        thermal_amplitude = max(temperature_monthly) - min(temperature_monthly)
-    else:
-        thermal_amplitude = 0.0
-
-    thermal_stability_index = max(
-        0.0,
-        min(100.0, 100.0 - thermal_amplitude * 6.0),
+    payload = build_nrcave_result_payload(
+        cave=cave,
+        result=result,
     )
 
-    simulation_result = {
-        "thermal_needs_kwh_monthly": thermal_needs,
-        "cooling_needs_kwh_monthly": cooling_needs,
-        "humidity_risk_index_monthly": humidity_risk_index_monthly,
-        "recommended_hvac_power_kw": recommended_hvac_power_kw,
-        "temperature_monthly": temperature_monthly,
-        "humidity_monthly": humidity_monthly,
-        "thermal_stability_index": round(thermal_stability_index, 1),
-        "passive_cooling_ratio": round(passive_cooling_ratio, 3),
-    }
-
-    payload = build_nrcave_payload(simulation_result)
-
-    return Response(
-        content=json.dumps(payload, indent=2, ensure_ascii=False),
-        media_type="application/json",
+    return JSONResponse(
+        content=payload,
     )
 
 @router.get("/caves/{cave_id}/monthly-targets")
@@ -1408,50 +1362,33 @@ def api_building_summary(
     x_simulcave_token: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    if SIMULCAVE_API_TOKEN:
-        if x_simulcave_token != SIMULCAVE_API_TOKEN:
-            raise HTTPException(status_code=401, detail="Invalid API token")
+    if (
+        SIMULCAVE_API_TOKEN
+        and x_simulcave_token != SIMULCAVE_API_TOKEN
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid API token",
+        )
 
-    cave = db.query(Cave).filter(Cave.id == cave_id).first()
+    cave = (
+        db.query(Cave)
+        .filter(Cave.id == cave_id)
+        .first()
+    )
 
-    if not cave:
-        raise HTTPException(status_code=404, detail="Cave introuvable.")
+    if cave is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Cave introuvable.",
+        )
 
     result = simulate_cave(cave)
 
-    return {
-        "source": "simulcave",
-        "cave_id": cave.id,
-        "cave_name": cave.name,
-        "building_only": True,
-
-        "climate_score": result.climate_score,
-        "climate_label": result.climate_label,
-        "energy_class": result.energy_class,
-        "energy_intensity_kwh_m3": result.energy_intensity_kwh_m3,
-
-        "annual": {
-            "heating_kwh": result.total_heating_kwh,
-            "cooling_kwh": result.total_cooling_kwh,
-            "energy_kwh": result.total_energy_kwh,
-            "cost_chf": result.annual_cost_chf,
-            "co2_kg": result.annual_co2_kg,
-            "co2_tons": result.annual_co2_tons,
-        },
-
-        "monthly": [
-            {
-                "month": month.month,
-                "heating_kwh": month.heating_kwh,
-                "cooling_kwh": month.cooling_kwh,
-                "effective_temp_c": month.effective_temp_c,
-                "relative_humidity_percent": month.relative_humidity_percent,
-                "humidity_risk_index": getattr(month, "humidity_risk_index", 0),
-                "condensation_risk": month.condensation_risk,
-            }
-            for month in result.monthly_results
-        ],
-    }
+    return build_nrcave_result_payload(
+        cave=cave,
+        result=result,
+    )
 
 NRCAVE_API_TOKEN = os.getenv("NRCAVE_API_TOKEN", "")
 

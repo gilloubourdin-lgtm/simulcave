@@ -1,9 +1,0 @@
-README.md
-pyproject.toml
-simulcave_core/__init__.py
-simulcave_core/adapter.py
-simulcave_core/engine.py
-simulcave_core.egg-info/PKG-INFO
-simulcave_core.egg-info/SOURCES.txt
-simulcave_core.egg-info/dependency_links.txt
-simulcave_core.egg-info/top_level.txt
