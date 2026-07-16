@@ -1,25 +1,17 @@
 # app/database.py
 
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from app.db.base import Base
+from app.db.session import (
+    DATABASE_URL,
+    SessionLocal,
+    engine,
+    get_db,
+)
 
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./simulcave.db")
-
-engine_args = {"pool_pre_ping": True}
-
-if DATABASE_URL.startswith("sqlite"):
-    engine_args["connect_args"] = {"check_same_thread": False}
-
-engine = create_engine(DATABASE_URL, **engine_args)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base = declarative_base()
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+__all__ = [
+    "Base",
+    "DATABASE_URL",
+    "SessionLocal",
+    "engine",
+    "get_db",
+]

@@ -10,3 +10,4 @@ itsdangerous
 requests
 openpyxl
 bcrypt
+alembic==1.18.5
