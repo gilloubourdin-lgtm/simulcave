@@ -6,7 +6,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.db.session import get_db
 from app.models import User
 from app.services.auth import (
     hash_password,

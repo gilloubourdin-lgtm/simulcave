@@ -12,7 +12,7 @@ from fastapi.responses import RedirectResponse, Response, JSONResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.db.session import get_db
 from app.models import Cave, Wall, Zone, User, RenovationScenarioDB, ZoneMonthlyTarget
 from app.routers.auth import require_user
 from app.services.simulation import simulate_cave
