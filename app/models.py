@@ -9,9 +9,11 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Index,
     Integer,
     String,
     UniqueConstraint,
+    text,
 )
 
 class User(Base):
@@ -28,10 +30,17 @@ class Cave(Base):
     __tablename__ = "caves"
 
     __table_args__ = (
-        UniqueConstraint(
+        Index(
+            "uq_simulcave_nrcave_project",
             "nrcave_instance",
             "nrcave_cave_id",
-            name="uq_simulcave_nrcave_project",
+            unique=True,
+            postgresql_where=text(
+                "nrcave_cave_id IS NOT NULL"
+            ),
+            sqlite_where=text(
+                "nrcave_cave_id IS NOT NULL"
+            ),
         ),
     )
 
